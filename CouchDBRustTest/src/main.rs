@@ -1,6 +1,8 @@
 //curl 'http://root:root@127.0.0.1:5984/testdb/_find' -X POST -H 'Content-Type: application/json' -d "{\"selector\": {\"lastname\": {\"\$eq\": \"rossi\"}}}
 //CouchDB "http://127.0.0.1:5984/_all_dbs"
 
+use serde_json::{json, Value};
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data = "{\"selector\": {\"lastname\": {\"$eq\": \"rossi\"}}}";
@@ -11,5 +13,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .text()
         .await?;
     println!("{:?}", resp);
+    let v: Value = serde_json::from_str(resp.as_str()).unwrap();
+    println!("{:?}",v["docs"]);
+    let a =json!(v["docs"][0]);
+    println!("{:?}",a);
+    println!("{:?}",a["lastname"]);
     Ok(())
 }
