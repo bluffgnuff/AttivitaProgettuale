@@ -10,9 +10,8 @@ struct Customer {
 }
 
 fn main() -> mongodb::error::Result<()> {
-    // Get a handle to the cluster
+
     let client = Client::with_uri_str("mongodb://localhost:27017")?;
-    // Ping the server to see if you can connect to the cluster
     let db = client.database("testDB");
     println!("Connected successfully.");
 
