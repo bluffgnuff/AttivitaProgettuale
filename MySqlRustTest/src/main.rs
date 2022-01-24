@@ -13,4 +13,4 @@ fn main() {
     let row: Vec<String>  = conn.unwrap().query("SELECT Lastname FROM Customers;").unwrap();
 
     println!("{}",row.get(0).unwrap());
-}
+} 
