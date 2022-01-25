@@ -3,9 +3,10 @@ extern crate serde_derive;
 extern crate rmp_serde as rmps;
 
 use std::borrow::Borrow;
+use std::ptr::null;
 use mysql::prelude::*;
 use mysql::*;
-use rmps::{Deserializer, Serializer};
+use rmps::{Deserializer, from_read_ref, Serializer};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
@@ -48,7 +49,7 @@ fn from_request_to_query(request: Request) -> String {
             //TODO gestione errore in caso assenza option
             let customer = request.customer;
             let customer_new = request.optional.unwrap();
-            format!("UPDATE {} SET FirstName='{}' WHERE FirstName='{}';",request.table, customer_new.firstname, customer.lastname)
+            format!("UPDATE {} SET FirstName='{}' WHERE FirstName='{}';",request.table, customer_new.firstname, customer.firstname)
         },
         Op::Delete => {
             let customer = request.customer;
@@ -56,8 +57,8 @@ fn from_request_to_query(request: Request) -> String {
         },
     }
 }
-// "DELETE from customers where FirstName='Paolo' and LastName='Rossi'
-fn server(url: &str, rx: Receiver<Vec<u8>>) {
+
+fn server(url: &str, rx: Receiver<Vec<u8>>, tx1: Sender<Vec<u8>>) {
     let opts = Opts::from_url(url);
     let pool = Pool::new(opts.unwrap()).unwrap();
     let mut conn = pool.get_conn().unwrap();
@@ -74,14 +75,19 @@ fn server(url: &str, rx: Receiver<Vec<u8>>) {
             Op::Read =>{
                 //TODO: it must be sent back
                 let res:Vec<(String,String)> = conn.query(query).unwrap();
-
+                let mut persons :Vec<Person> = Vec::new();
                 if !res.is_empty() {
-                    println!("[P] Query result:");
-
                     for el in res {
-                        println!("{:?}",el );
+                        let p = Person{
+                            firstname:el.0,
+                            lastname: el.1,
+                        };
+                        persons.push(p);
                     }
                 }
+                let mut answ = Vec::new();
+                persons.serialize(&mut Serializer::new(&mut answ)).unwrap();
+                tx1.send(answ);
             },
             Op::Delete => {
                 let res:Result<Vec<String>> = conn.query(query);
@@ -97,6 +103,7 @@ fn server(url: &str, rx: Receiver<Vec<u8>>) {
 fn main() {
     let url = "mysql://root:root@127.0.0.1:3306/testDB";
     let (tx, rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
+    let (tx1, rx1): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
 
     thread::spawn(move || {
         thread::sleep(Duration::from_millis(500));
@@ -138,6 +145,9 @@ fn main() {
         req.serialize(&mut Serializer::new(&mut req_pack)).unwrap();
 
         tx.send(req_pack);
+        let buff = rx1.recv().unwrap();
+        let persons :Vec<Person>= rmp_serde::from_read_ref(&buff).unwrap();
+        println!("[C] received {:?}",persons);
         thread::sleep(Duration::from_millis(100));
 
         // Update
@@ -181,5 +191,5 @@ fn main() {
         println!("[C] asks for a {:?}", req.op);
         tx.send(req_pack);
     });
-    server(url, rx);
+    server(url, rx, tx1);
 }
