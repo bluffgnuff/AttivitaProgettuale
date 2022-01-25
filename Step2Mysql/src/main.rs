@@ -46,7 +46,6 @@ fn from_request_to_query(request: Request) -> String {
             format!("SELECT FirstName, LastName  FROM {} WHERE LastName='{}';", request.table, customer.lastname )
         },
         Op::Update => {
-            //TODO gestione errore in caso assenza option
             let customer = request.customer;
             let customer_new = request.optional.unwrap();
             format!("UPDATE {} SET FirstName='{}' WHERE FirstName='{}';",request.table, customer_new.firstname, customer.firstname)
@@ -73,7 +72,6 @@ fn server(url: &str, rx: Receiver<Vec<u8>>, tx1: Sender<Vec<u8>>) {
 
         match  req.op{
             Op::Read =>{
-                //TODO: it must be sent back
                 let res:Vec<(String,String)> = conn.query(query).unwrap();
                 let mut persons :Vec<Person> = Vec::new();
                 if !res.is_empty() {
