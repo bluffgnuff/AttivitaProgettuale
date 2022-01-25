@@ -2,8 +2,6 @@
 extern crate serde_derive;
 extern crate rmp_serde as rmps;
 
-use std::borrow::Borrow;
-use std::ptr::null;
 use mysql::prelude::*;
 use mysql::*;
 use rmps::{Deserializer, from_read_ref, Serializer};
