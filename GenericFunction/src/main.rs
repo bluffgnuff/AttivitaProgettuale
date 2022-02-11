@@ -5,7 +5,7 @@ use serde;
 use serde::{Deserialize, Serialize};
 use rmps::{Deserializer, Serializer};
 
-//Usage env parameters --OPERATION {CRUD operation} --URL? {url_address}
+//Usage env parameters --OPERATION {CRUD operation} --FIRSTNAME {FIRSTNAME} --LASTNAME{FIRSTNAME}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 struct Customer {
@@ -33,8 +33,8 @@ fn main() {
     let operation = env::var("OPERATION").unwrap();
     let firstname = env::var("FIRSTNAME").unwrap_or("Mario".to_string());
     let lastname = env::var("LASTNAME").unwrap_or("Rossi".to_string());
-    let firstname_opt = env::var("LASTNAME").unwrap_or("Luca".to_string());
-    let lastname_opt = env::var("LASTNAME").unwrap_or("Rossi".to_string());
+    let firstname_opt = env::var("FIRSTNAME-OP").unwrap_or("Luca".to_string());
+    let lastname_opt = env::var("LASTNAME-OP").unwrap_or("Rossi".to_string());
 
     let stdin = std::io::stdin();
     let mut buffer = String::new();
