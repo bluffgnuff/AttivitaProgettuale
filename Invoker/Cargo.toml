@@ -1,0 +1,15 @@
+[package]
+name = "invoker"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mysql = "*"
+rmp-serde = "1.0.0"
+serde = "*"
+serde_derive = "*"
+
+[dependencies.rmp]
+rmp = "^0.8"

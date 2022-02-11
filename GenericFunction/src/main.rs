@@ -29,21 +29,15 @@ struct Request {
 }
 
 fn main() {
-    // env_logger::init();
-    // let operation = env::var("OPERATION").unwrap();
-    // let firstname = env::var("FIRSTNAME").unwrap_or("Mario".to_string());
-    // let lastname = env::var("LASTNAME").unwrap_or("Rossi".to_string());
-    // let firstname_opt = env::var("LASTNAME").unwrap_or("Luca".to_string());
-    // let lastname_opt = env::var("LASTNAME").unwrap_or("Rossi".to_string());
+    env_logger::init();
+    let operation = env::var("OPERATION").unwrap();
+    let firstname = env::var("FIRSTNAME").unwrap_or("Mario".to_string());
+    let lastname = env::var("LASTNAME").unwrap_or("Rossi".to_string());
+    let firstname_opt = env::var("LASTNAME").unwrap_or("Luca".to_string());
+    let lastname_opt = env::var("LASTNAME").unwrap_or("Rossi".to_string());
 
     let stdin = std::io::stdin();
     let mut buffer = String::new();
-//TODO prendere i valori da argomento
-    // let operation =
-    // let firstname =
-    // let lastname =
-    // let firstname_opt =
-    // let lastname_opt =
 
     debug!("Operation selected :{:?}", operation);
     let mut req = Request;
