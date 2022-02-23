@@ -7,6 +7,7 @@ use rmps::{Deserializer, Serializer};
 
 //Usage env parameters --OPERATION {CRUD operation} --FIRSTNAME {FIRSTNAME} --LASTNAME{FIRSTNAME}
 
+//TODO sostituisco con map?
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 struct Customer {
     firstname: String,
@@ -30,6 +31,7 @@ struct Request {
 
 fn main() {
     env_logger::init();
+    //TODO gestire anche la scelta della tabella
     let operation = env::var("OPERATION").unwrap();
     let firstname = env::var("FIRSTNAME").unwrap_or("Mario".to_string());
     let lastname = env::var("LASTNAME").unwrap_or("Rossi".to_string());
@@ -94,15 +96,17 @@ fn main() {
             }
             _ => "err",
         }
-    debug!("Request :{:?}", req);
+    debug!("Request: {:?}", req);
     // let mut req_pack :Vec<u8>= Vec::new();
     let mut req_pack;
     req.serialize(&mut Serializer::new(&mut req_pack)).unwrap();
+
+    //FIXME dopo aver deciso come gestirli
     io::stdout().write_all(&mut req_pack);
     debug!("Request sent");
 
     stdin.read_line(&mut buffer);
     rmp_serde::from_read_ref(&buffer).unwrap();
-    debug!("Data received :{:?}",buffer );
+    debug!("Data received: {:?}",buffer );
     ok();
 }
