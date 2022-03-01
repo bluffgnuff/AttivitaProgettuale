@@ -2,20 +2,18 @@
 extern crate serde_derive;
 extern crate rmp_serde as rmps;
 
+use rmps::Serializer;
+use serde::Serialize;
+//use rmps::{Deserializer, from_read_ref, Serializer};
+//use serde::{Deserialize, Serialize};
+use std::env;
+use std::collections::HashMap;
+use std::fmt::format;
+use std::io::{BufRead, BufReader, Write};
+use std::process::{Child, Command, Stdio};
+use log::debug;
 use mysql::prelude::*;
 use mysql::*;
-use rmps::{Deserializer, from_read_ref, Serializer};
-use serde::{Deserialize, Serialize};
-use std::{env, thread};
-use std::io::{BufRead, BufReader, Lines};
-use std::process::{ChildStdin, ChildStdout, Command, Stdio};
-use std::time::Duration;
-
-// #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
-// struct Person {
-//     firstname: String,
-//     lastname: String,
-// }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 enum Op {
@@ -29,106 +27,170 @@ enum Op {
 struct Request {
     op: Op,
     table: String,
-    customer: Person,
-    optional: Option<Person>,
+    param: HashMap<String, String>,
+    param_to_up: Option<HashMap<String, String>>,
 }
 
 fn from_request_to_query(request: Request) -> String {
+    debug!("Invoker | type of operation requested: {:?}", request.op);
     match request.op {
         Op::Create => {
-            let customer = request.customer;
-            format!("INSERT INTO {}(FirstName, LastName) VALUES ( '{}', '{}');", request.table, customer.firstname, customer.lastname )
+            let mut col:String = String::new();
+            let mut val :String = String::new();
+            let mut first = true;
+
+//			Separazione nome colonne da valore
+            for p in request.param {
+                if first{
+                    col = format!("{}", p.0);
+                    val = format!("'{}'", p.1);
+                    first = false;
+                }else{
+                    col = format!("{},{}", col, p.0);
+                    val = format!("{},'{}'", val, p.1);
+                }
+            }
+            format!("INSERT INTO {} ({}) VALUES ({});", request.table, col, val)
         },
         Op::Read => {
-            let customer = request.customer;
-            format!("SELECT FirstName, LastName  FROM {} WHERE LastName='{}';", request.table, customer.lastname )
+            let mut to_find:String = String::new();
+            let mut first = true;
+            for p in request.param {
+                if first {
+                    to_find = format!("{}='{}' ", p.0, p.1);
+                    first = false;
+                }else{
+                    to_find = format!("{}AND {}='{}' ", to_find, p.0, p.1);
+                }
+            }
+            format!("SELECT * FROM {} WHERE {};", request.table, to_find )
         },
         Op::Update => {
-            let customer = request.customer;
-            let customer_new = request.optional.unwrap();
-            format!("UPDATE {} SET FirstName='{}' WHERE FirstName='{}';",request.table, customer_new.firstname, customer.firstname)
+            let mut old_entry:String = String::new();
+            let mut new_entry:String = String::new();
+            let mut first = true;
+            let mut first_new = true;
+
+//		Data to modify
+            for p in request.param {
+                if first {
+                    old_entry = format!("{}='{}' ", p.0, p.1);
+                    first = false;
+                }else {
+                    old_entry = format!("{}{}='{}' ", old_entry, p.0, p.1);
+                }
+            }
+//		New Data
+            for p in request.param_to_up.unwrap() {
+                if first_new {
+                    new_entry = format!("{}='{}' ", p.0, p.1);
+                    first_new = false;
+                }else {
+                    new_entry = format!("{}{}='{}' ", new_entry, p.0, p.1);
+                }
+            }
+
+            format!("UPDATE {} SET {} WHERE {};",request.table, old_entry,  new_entry)
         },
         Op::Delete => {
-            let customer = request.customer;
-            format!("DELETE from {} where FirstName='{}' and LastName='{}';", request.table, customer.firstname, customer.lastname)
+            let mut to_delete:String = String::new();
+            let mut first = true;
+            for p in request.param {
+                if first {
+                    to_delete = format!("{}='{}' ", p.0, p.1);
+                    first = false;
+                }
+                else {
+                    to_delete = format!("{}{}='{}' ", to_delete, p.0, p.1);
+                }
+            }
+            format!("DELETE from {} where {};", request.table, to_delete)
         },
     }
 }
 
-fn server(url: String, rx: &mut ChildStdin, tx1: Lines<BufReader<ChildStdout>>) {
+fn work(url: String, mut child: Child) {
+    let opts = Opts::from_url(url.as_str());
     let pool = Pool::new(opts.unwrap()).unwrap();
     let mut conn = pool.get_conn().unwrap();
-    debug!("Invoker starts the connection on URL", url);
+    let mut child_in = child.stdin.as_mut().unwrap();
+    let mut child_out = BufReader::new(child.stdout.unwrap()).lines();
+    
+    debug!("Invoker | starts the connection on URL= {}", url);
 
-    loop {
-        // Receive
-        // FIXME update con stdin
-        let mut buff = rx.recv().unwrap();
-        //  Deserialize
-        let req: Request = rmp_serde::from_read_ref(&buff).unwrap();
-        //  Query
-        let query = from_request_to_query(req.clone());
+// Receive
+    let mut out = child_out.next().unwrap().unwrap();
+    out.remove(0);
+    out.remove(out.len()-1);
+    debug!("Invoker | request cleaned {:?}", out);
 
-        match  req.op{
-            Op::Read =>{
-                let res:Vec<(String,String)> = conn.query(query).unwrap();
-                //TODO modificare usando una map<String,String9/>?
-                let mut persons :Vec<Person> = Vec::new();
-                if !res.is_empty() {
-                    for el in res {
-                        let p = Person{
-                            firstname:el.0,
-                            lastname: el.1,
-                        };
-                        persons.push(p);
-                    }
-                }
-                let mut answ = Vec::new();
-                persons.serialize(&mut Serializer::new(&mut answ)).unwrap();
-                // FIXME update con stdout
-                tx1.send(answ);
-            },
-            Op::Delete => {
-                let res:Result<Vec<String>> = conn.query(query);
-                break;
-            }
-            _ => {
-                break
-            }
+    let req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
+    debug!("Invoker | serialized request {:?}", req_serialized);
+
+//  Deserialize
+    let req: Request = rmp_serde::from_read_ref(&req_serialized).unwrap();
+    debug!("Invoker | deserialized request {:?}", req);
+
+//  Query generation
+    let query = from_request_to_query(req.clone());
+    debug!("Invoker | query to execute: {}", query);
+
+    let mut result_serialized  = Vec::new();
+
+//  Query execution
+    match req.op{
+        Op::Read =>{
+// FIXME: dependence on the type of data to be returned
+            let query_result :Vec<(Option<i32>,String,String)> = conn.query(query).unwrap();
+            debug!("Invoker | res: {:?}", query_result);
+            query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
+            debug!("Invoker | result serialized: {:?}", result_serialized);
+        },
+        Op::Create | Op::Update | Op::Delete => {
+             // query_result = conn.query(query).unwrap();
+            let query_result =
+             match conn.query_drop(query){
+                 Ok(_) => String::from("Success"),
+                 Err(_) =>String::from("Error")
+            };
+            query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
+            debug!("Invoker | result serialized: {:?}", result_serialized);
+        },
+    }
+//	Send back an answer
+    let mut res_string_result_serialized = String::new();
+    let mut first = true;
+
+    // FIXME inviare un dato opportuno
+    for el in result_serialized {
+        if first {
+            res_string_result_serialized= format!("{}", el);
+            first = false;
+        }
+        else {
+            res_string_result_serialized = format!("{}, {}", res_string_result_serialized, el);
         }
     }
+    debug!("Invoker | sent the result {}", res_string_result_serialized);
+    child_in.write_all(res_string_result_serialized.as_str().as_bytes());
 }
 
 fn main() {
     env_logger::init();
-    let url = env::var("URL").unwrap();//  "mysql://root:root@127.0.0.1:3306/";
+    let url = env::var("URL").unwrap_or("mysql://root:root@127.0.0.1:3306".to_string());
+    let db = env::var("DB-NAME").unwrap_or("testDB".to_string());
+    let command = env::var("COMMAND").unwrap_or("../GenericFunction/target/debug/GenericFunction".to_string());
+    let url_db = format!("{}/{}",url,db);
     debug!("Invoker | starts");
-    debug!("Invoker | URL = {:?}", );
-    let mut child = Command::new(command)
+    debug!("Invoker | URL = {}", url);
+    debug!("Invoker | DB = {}", db);
+    debug!("Invoker | COMMAND = {}", command);
+    
+    let child = Command::new(command)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .spawn()?;
-    debug!("Invoker | child launch");
-    //FIXME remove the channel dependencies
-    //TODO add comunication stdin/out
-    //TODO remove the person/customer dependency
-    let child_stdin = child.stdin.as_mut().unwrap();
-    //let child_stdout = child.stdout.as_mut().unwrap();
-    let mut child_stdout = BufReader::new(child.stdout.unwrap()).lines();
-    // drop(child_stdin);
-//TODO valuta le opzioni
-//1
-    //     .stdout(Stdio::piped())
-    //     .spawn()?;
-    // let output = child.wait_with_output()?;
-// 2
-    // let output = Command::new("/bin/bash")
-    //     .arg("-c")
-    //     .arg(&cm)
-    //     .output()
-    //     .expect("failed to execute process");
-    // let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-
-
-    server(url, child_stdin, child_stdout);
+        .spawn().unwrap();
+    debug!("Invoker | child launched"); 
+   
+    work(url_db, child);
 }

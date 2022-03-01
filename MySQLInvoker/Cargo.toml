@@ -10,6 +10,8 @@ mysql = "*"
 rmp-serde = "1.0.0"
 serde = "*"
 serde_derive = "*"
+log = "0.4.14"
+env_logger = "0.9.0"
 
 [dependencies.rmp]
 rmp = "^0.8"
