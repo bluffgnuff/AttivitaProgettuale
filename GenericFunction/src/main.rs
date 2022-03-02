@@ -2,15 +2,17 @@
 extern crate serde_derive;
 extern crate rmp_serde as rmps;
 
-use rmps::{Deserializer, from_read_ref, Serializer};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::{env, io, time::SystemTime};
-use std::io::{BufRead, Read, Write};
-use std::ptr::null;
-use log::{debug, error};
 
-//Usage env parameters --OPERATION {CRUD operation} --FIRSTNAME {FIRSTNAME} --LASTNAME {FIRSTNAME} --TABLE {TABLE}
+use rmps::Serializer;
+use serde::{Serialize};
+// use rmps::{Deserializer, from_read_ref, Serializer};
+// use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::env;
+use std::io::Read;
+use log::debug;
+
+//Usage env parameters --OPERATION {CRUD operation} --TABLE {TABLE} --FIRSTNAME {FIRSTNAME} --LASTNAME {LASTNAME}  --FIRSTNAME-OP {FIRSTNAME-OP} --LASTNAME-OP {LASTNAME-OP}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 enum Op {
@@ -43,9 +45,9 @@ fn main() {
     customer.insert("FIRSTNAME".to_string(),firstname);
     customer.insert("LASTNAME".to_string(),lastname);
 
-    let mut customerNew: HashMap<String, String> = HashMap::new();
-    customerNew.insert("FIRSTNAME".to_string(),firstname_opt);
-    customerNew.insert("LASTNAME".to_string(),lastname_opt);
+    let mut customer_new: HashMap<String, String> = HashMap::new();
+    customer_new.insert("FIRSTNAME".to_string(),firstname_opt);
+    customer_new.insert("LASTNAME".to_string(),lastname_opt);
 
     debug!("Operation selected :{:?}", operation);
     let mut req =
@@ -55,7 +57,7 @@ fn main() {
                     op: Op::Create,
                     table:String::from("Customers"),
                     param: customer,
-                    param_to_up: Option::from(customerNew),
+                    param_to_up: Option::from(customer_new),
                  },
             // Read
             "Read" =>
@@ -63,15 +65,15 @@ fn main() {
                     op: Op::Read,
                     table:String::from("Customers"),
                     param: customer,
-                    param_to_up: Option::from(customerNew),
+                    param_to_up: Option::from(customer_new),
                 },
             // Update
-            "Update" | _ =>
+            "Update" =>
                 Request {
                     op: Op::Update,
                     table:String::from("Customers"),
                     param: customer,
-                    param_to_up: Option::from(customerNew),
+                    param_to_up: Option::from(customer_new),
                 },
             // Delete
             "Delete" =>
@@ -79,13 +81,18 @@ fn main() {
                     op: Op::Delete,
                     table:String::from("Customers"),
                     param: customer,
-                    param_to_up: Option::from(customerNew),
+                    param_to_up: Option::from(customer_new),
                 },
-            // _ =>
-            //     error!("Invoker | ERROR bad operation")
-            // ,
+            // Update
+            _ =>
+                Request {
+                    op: Op::Update,
+                    table:String::from("Customers"),
+                    param: customer,
+                    param_to_up: Option::from(customer_new),
+                },
         };
-    debug!("Request :{:?}", req);
+    debug!("Request: {:?}", req);
 
     let mut req_pack = Vec::new();
     req.serialize(&mut Serializer::new(&mut req_pack)).unwrap();
@@ -93,22 +100,14 @@ fn main() {
     println!("{:?}",req_pack);
     debug!("Request serialized sent {:?}", req_pack);
 
-//FIXME problema in lettura o scrittura ?
-    // stdin.read_line(&mut buffer);
-    // rmp_serde::from_read_ref(&buffer).unwrap();
-    // let stdin = io::stdin();
     stdin.read_to_string(&mut result);
 
-    // for line in stdin.lock().lines() {
-    //     debug!("{}", line.unwrap());
-    // }
-    // out.remove(0);
-    // out.remove(out.len()-1);
     debug!("Data received: {:?}",result );
 
     let req_serialized:Vec<u8> = result.split(", ").map(|x| x.parse().unwrap()).collect();
     debug!("Serialized answer {:?}", req_serialized);
 
+// FIXME: dependence on the type of data to be returned
 //  Deserialize
     if operation == "Read"{
         let req :Vec<(Option<i32>,String,String)> = rmp_serde::from_read_ref(&req_serialized).unwrap();

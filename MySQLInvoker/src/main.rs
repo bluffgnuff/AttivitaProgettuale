@@ -8,12 +8,13 @@ use serde::Serialize;
 //use serde::{Deserialize, Serialize};
 use std::env;
 use std::collections::HashMap;
-use std::fmt::format;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use log::debug;
 use mysql::prelude::*;
 use mysql::*;
+
+//Usage env parameters --URL {URL} --DB-NAME {DB-NAME} --COMMAND {COMMAND} --COMMAND-PARAMETERS {COMMAND-PARAMETERS}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 enum Op {
@@ -39,7 +40,7 @@ fn from_request_to_query(request: Request) -> String {
             let mut val :String = String::new();
             let mut first = true;
 
-//			Separazione nome colonne da valore
+//			Split name, val
             for p in request.param {
                 if first{
                     col = format!("{}", p.0);
@@ -109,21 +110,16 @@ fn from_request_to_query(request: Request) -> String {
     }
 }
 
-fn work(url: String, mut child: Child) {
-    let opts = Opts::from_url(url.as_str());
-    let pool = Pool::new(opts.unwrap()).unwrap();
-    let mut conn = pool.get_conn().unwrap();
-    let mut child_in = child.stdin.as_mut().unwrap();
+fn work(mut conn: PooledConn, mut child: Child) {
+    let child_in = child.stdin.as_mut().unwrap();
     let mut child_out = BufReader::new(child.stdout.unwrap()).lines();
-    
-    debug!("Invoker | starts the connection on URL= {}", url);
 
 // Receive
     let mut out = child_out.next().unwrap().unwrap();
     out.remove(0);
     out.remove(out.len()-1);
     debug!("Invoker | request cleaned {:?}", out);
-
+    drop(child_out);
     let req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
     debug!("Invoker | serialized request {:?}", req_serialized);
 
@@ -147,7 +143,6 @@ fn work(url: String, mut child: Child) {
             debug!("Invoker | result serialized: {:?}", result_serialized);
         },
         Op::Create | Op::Update | Op::Delete => {
-             // query_result = conn.query(query).unwrap();
             let query_result =
              match conn.query_drop(query){
                  Ok(_) => String::from("Success"),
@@ -161,7 +156,7 @@ fn work(url: String, mut child: Child) {
     let mut res_string_result_serialized = String::new();
     let mut first = true;
 
-    // FIXME inviare un dato opportuno
+// FIXME: dependence on the type of data to be returned
     for el in result_serialized {
         if first {
             res_string_result_serialized= format!("{}", el);
@@ -181,16 +176,32 @@ fn main() {
     let db = env::var("DB-NAME").unwrap_or("testDB".to_string());
     let command = env::var("COMMAND").unwrap_or("../GenericFunction/target/debug/GenericFunction".to_string());
     let url_db = format!("{}/{}",url,db);
+
+    // Parameters for the command
+    // let operation = env::var("OPERATION").unwrap_or("Read".to_string());
+    // let firstname = env::var("TABLE").unwrap_or("Customers".to_string());
+    // let firstname = env::var("FIRSTNAME").unwrap_or("Mario".to_string());
+    // let lastname = env::var("LASTNAME").unwrap_or("Rossi".to_string());
+    // let firstname_opt = env::var("FIRSTNAME-OP").unwrap_or("Luca".to_string());
+    // let lastname_opt = env::var("LASTNAME-OP").unwrap_or("Rossi".to_string());
+
     debug!("Invoker | starts");
     debug!("Invoker | URL = {}", url);
     debug!("Invoker | DB = {}", db);
     debug!("Invoker | COMMAND = {}", command);
-    
+
+    let opts = Opts::from_url(url_db.as_str());
+    let pool = Pool::new(opts.unwrap()).unwrap();
+    let conn = pool.get_conn().unwrap();
+
+    debug!("Invoker | starts the connection on URL= {}", url_db);
+
     let child = Command::new(command)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn().unwrap();
-    debug!("Invoker | child launched"); 
+
+    debug!("Invoker | child launched PID = {}", child.id());
    
-    work(url_db, child);
+    work(conn, child);
 }
