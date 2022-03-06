@@ -107,11 +107,14 @@ fn main() {
     let req_serialized:Vec<u8> = result.split(", ").map(|x| x.parse().unwrap()).collect();
     debug!("Serialized answer {:?}", req_serialized);
 
-// FIXME: dependence on the type of data to be returned
 //  Deserialize
     if operation == "Read"{
-        let req :Vec<(Option<i32>,String,String)> = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        debug!("Deserialized answer {:?}", req);
+        // FIXME: dependence on the type of data to be returned
+        let req :Vec<(String)> = rmp_serde::from_read_ref(&req_serialized).unwrap();
+        debug!("Deserialized answer: ");
+        for el in req {
+            debug!("{:?}", el);
+        }
     }
     else{
         let req : String = rmp_serde::from_read_ref(&req_serialized).unwrap();
