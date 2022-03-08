@@ -2,11 +2,8 @@
 extern crate serde_derive;
 extern crate rmp_serde as rmps;
 
-
 use rmps::Serializer;
 use serde::{Serialize};
-// use rmps::{Deserializer, from_read_ref, Serializer};
-// use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 use std::io::Read;
@@ -32,12 +29,12 @@ struct Request {
 
 fn main() {
     env_logger::init();
-    let operation = env::var("OPERATION").unwrap_or("Read".to_string());
-    let firstname = env::var("TABLE").unwrap_or("Customers".to_string());
-    let firstname = env::var("FIRSTNAME").unwrap_or("Mario".to_string());
-    let lastname = env::var("LASTNAME").unwrap_or("Rossi".to_string());
-    let firstname_opt = env::var("FIRSTNAME-OP").unwrap_or("Luca".to_string());
-    let lastname_opt = env::var("LASTNAME-OP").unwrap_or("Rossi".to_string());
+    let operation = env::args().nth(1).unwrap_or("Read".to_string());
+    let table_db = env::args().nth(2).unwrap_or("Customers".to_string());
+    let firstname = env::args().nth(3).unwrap_or("Mario".to_string());
+    let lastname = env::args().nth(4).unwrap_or("Rossi".to_string());
+    let firstname_opt = env::args().nth(5).unwrap_or("Luca".to_string());
+    let lastname_opt = env::args().nth(6).unwrap_or("Rossi".to_string());
 
     let mut stdin = std::io::stdin();
     let mut result = String::new();
@@ -49,29 +46,21 @@ fn main() {
     customer_new.insert("FIRSTNAME".to_string(),firstname_opt);
     customer_new.insert("LASTNAME".to_string(),lastname_opt);
 
-    debug!("Operation selected :{:?}", operation);
-    let mut req =
+    debug!("Operation selected: {}", operation);
+    let req =
         match operation.as_str() {
             "Create" =>
                  Request {
                     op: Op::Create,
-                    table:String::from("Customers"),
+                    table: table_db,
                     param: customer,
                     param_to_up: Option::from(customer_new),
                  },
-            // Read
-            "Read" =>
-                Request {
-                    op: Op::Read,
-                    table:String::from("Customers"),
-                    param: customer,
-                    param_to_up: Option::from(customer_new),
-                },
             // Update
             "Update" =>
                 Request {
                     op: Op::Update,
-                    table:String::from("Customers"),
+                    table: table_db,
                     param: customer,
                     param_to_up: Option::from(customer_new),
                 },
@@ -79,15 +68,15 @@ fn main() {
             "Delete" =>
                  Request {
                     op: Op::Delete,
-                    table:String::from("Customers"),
+                     table: table_db,
                     param: customer,
                     param_to_up: Option::from(customer_new),
                 },
-            // Update
-            _ =>
+            // Read
+            "Read" | _ =>
                 Request {
-                    op: Op::Update,
-                    table:String::from("Customers"),
+                    op: Op::Read,
+                    table: table_db,
                     param: customer,
                     param_to_up: Option::from(customer_new),
                 },
@@ -110,8 +99,8 @@ fn main() {
 //  Deserialize
     if operation == "Read"{
         // FIXME: dependence on the type of data to be returned
-        let req :Vec<(String)> = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        debug!("Deserialized answer: ");
+        let req :Vec<String> = rmp_serde::from_read_ref(&req_serialized).unwrap();
+        debug!("Deserialized answer: {:?}",req);
         for el in req {
             debug!("{:?}", el);
         }
