@@ -1,0 +1,22 @@
+[package]
+name = "MongoInvoker"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rmp-serde = "1.0.0"
+serde = "*"
+serde_derive = "*"
+log = "0.4.14"
+env_logger = "0.9.0"
+nats = "0.9.18"
+
+[dependencies.rmp]
+rmp = "^0.8"
+
+[dependencies.mongodb]
+version = "2.0.0"
+default-features = false
+features = ["sync"]
