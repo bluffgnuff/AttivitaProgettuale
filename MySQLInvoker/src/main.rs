@@ -13,7 +13,7 @@ use log::debug;
 use mysql::prelude::*;
 use mysql::*;
 use nats::Subscription;
-//Usage env parameters --URL {URL} --DB-NAME {DB-NAME} --COMMAND {COMMAND}
+//  Usage env parameters --URL {URL} --DB-NAME {DB-NAME} --COMMAND {COMMAND}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 enum Op {
@@ -39,7 +39,7 @@ fn from_request_to_query(request: Request) -> String {
             let mut val :String = String::new();
             let mut first = true;
 
-//			Split name, val
+            //  Split name, val
             for p in request.param {
                 if first{
                     col = format!("{}", p.0);
@@ -71,7 +71,7 @@ fn from_request_to_query(request: Request) -> String {
             let mut first = true;
             let mut first_new = true;
 
-//		Data to modify
+            //	Data to modify
             for p in request.param {
                 if first {
                     old_entry = format!("{}='{}'", p.0, p.1);
@@ -80,7 +80,7 @@ fn from_request_to_query(request: Request) -> String {
                     old_entry = format!("{} AND {}='{}'", old_entry, p.0, p.1);
                 }
             }
-//		New Data
+            //  New Data
             for p in request.param_to_up.unwrap() {
                 if first_new {
                     new_entry = format!("{}='{}'", p.0, p.1);
@@ -122,7 +122,7 @@ fn work(conn: &mut mysql::PooledConn, command: String) {
     let child_in = child.stdin.as_mut().unwrap();
     let mut child_out = BufReader::new(child.stdout.unwrap()).lines();
 
-    // Receive
+    //  Receive
     let mut out = child_out.next().unwrap().unwrap();
     out.remove(0);
     out.remove(out.len()-1);
