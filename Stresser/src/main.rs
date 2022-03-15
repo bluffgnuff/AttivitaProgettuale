@@ -8,8 +8,8 @@ fn main() {
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
     // let trigger_args = env::var("TRIGGER-ARGS").unwrap_or("trigger-args".to_string());
     // let group = env::var("GROUP").unwrap_or("default".to_string());
-    let command = env::var("COMMAND").unwrap_or("../GenericFunction/target/debug/GenericFunction".to_string());
-    let args = env::var("COMMAND-ARGS").unwrap_or("Read Customers Luca Rossi".to_string());
+    let command = env::var("COMMAND").unwrap_or("../GenericFunctionWithFlag/target/debug/GenericFunctionWithFlag".to_string());
+    let args = env::var("COMMAND-ARGS").unwrap_or("--operation Read  --table Customers --firstname Davide --lastname Rossi".to_string());
     let sleep = env::var("SLEEP")
         .unwrap_or("1000000".to_string())
         .parse::<u64>()

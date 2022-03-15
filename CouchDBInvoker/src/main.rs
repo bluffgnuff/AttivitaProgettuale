@@ -12,7 +12,6 @@ use std::time::{ SystemTime};
 use log::{debug};
 use nats::Subscription;
 use reqwest::Client;
-use serde::de::Unexpected::Str;
 //Usage env parameters --URL {URL} --DB-NAME {DB-NAME} --COMMAND {COMMAND}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
@@ -33,7 +32,6 @@ struct Request {
 // Convert a Request to a CouchDB query
 fn from_request_to_json(request: Request) -> String {
     debug!("Invoker | type of operation requested: {:?}", request.op);
-    // TODO Data to JSON
     match request.op {
         Op::Create => {
             format!("{:?}" ,request.param)
@@ -66,18 +64,14 @@ fn from_request_to_json(request: Request) -> String {
             let close = "}";
             let old_rev = request.param.get("_rev").unwrap();
             let mut res = format!("{} \"_rev\": \"{}\"", start, old_rev);
-            // let mut res = format!("{} \"docs\":[ \"rev\": {}", start, old_rev);
-            // let mut res = String::new();
-            // let mut first = true;
             for (key, val) in request.param{
                 if key!= "_rev".to_string() && key!= "id".to_string() {
                     res = format!("{}, \"{}\": \"{}\"", res, key, val);
                 }
             }
-            // format!("{} ] {} {}", res, close, close)
             format!("{} {}", res, close)
         },
-        Op::Delete  => format!("{}",request.param.get("id").unwrap())
+        Op::Delete  => format!("")
     }
 }
 
@@ -117,41 +111,43 @@ async fn work(client : &mut Client, command: String, url_base_db: &String, usern
             debug!("Invoker | query to execute: {}", data);
 
             let query_result = client.post(url_base_db).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
+            debug!("Invoker | result: {:?}", query_result);
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
         },
         Op::Read =>{
-            // Send back a Vec<Row> to keep the invoker independent from the data type
             //  Query generation
             let data = from_request_to_json(req.clone());
             debug!("Invoker | query to execute: {}", data);
 
             let url= format!("{}/_find",url_base_db);
             let query_result = client.post(url).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
-            debug!("Invoker | res: {:?}", query_result);
+            debug!("Invoker | result: {:?}", query_result);
 
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
-
             debug!("Invoker | result serialized: {:?}", result_serialized);
         },
         Op::Update => {
             //  Query generation
             let data = from_request_to_json(req.clone());
-            debug!("Invoker | query to execute: {}", data);
-            // POST /{db}/_bulk_docs
             let url= format!("{}/{}",url_base_db, req.param.get("id").unwrap());
+            debug!("Invoker | query to execute: {}", data);
+
             let query_result = client.put(url).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
             debug!("Invoker | result: {:?}", query_result);
+
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
         },
         Op::Delete => {
             //  Query generation
-            let data = from_request_to_json(req.clone());
-            debug!("Invoker | query to execute: {}", data);
-
+            let data = req.param.get("id").unwrap();
             let url= format!("{}/{}",url_base_db, data);
+            debug!("Invoker | query to execute: delete {}", data);
+
             let query_result = client.delete(url).basic_auth(username, Some(password)).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
+            debug!("Invoker | result: {:?}", query_result);
+
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
         },
@@ -169,7 +165,8 @@ async fn work(client : &mut Client, command: String, url_base_db: &String, usern
             res_string_result_serialized = format!("{}, {}", res_string_result_serialized, el);
         }
     }
-    debug!("Invoker | sent the result {}", res_string_result_serialized);
+
+    debug!("Invoker | send the result {}", res_string_result_serialized);
     child_in.write_all(res_string_result_serialized.as_str().as_bytes());
 }
 

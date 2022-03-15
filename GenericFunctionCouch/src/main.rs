@@ -41,6 +41,7 @@ fn main() {
     let mut stdin = std::io::stdin();
     let mut result = String::new();
     let mut customer: HashMap<String, String> = HashMap::new();
+    let mut customer_new: HashMap<String, String> = HashMap::new();
 
     if operation != "Create".to_string() && operation != "Read".to_string() {
         customer.insert("id".to_string(), id);
@@ -52,7 +53,6 @@ fn main() {
     customer.insert("FIRSTNAME".to_string(),firstname);
     customer.insert("LASTNAME".to_string(),lastname);
 
-    let mut customer_new: HashMap<String, String> = HashMap::new();
     customer_new.insert("FIRSTNAME".to_string(),firstname_opt);
     customer_new.insert("LASTNAME".to_string(),lastname_opt);
 
