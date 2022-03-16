@@ -12,6 +12,7 @@ use std::time::{ SystemTime};
 use log::{debug};
 use nats::Subscription;
 use reqwest::Client;
+
 //Usage env parameters --URL {URL} --DB-NAME {DB-NAME} --COMMAND {COMMAND}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
@@ -42,6 +43,8 @@ fn from_request_to_json(request: Request) -> String {
             let start_select = "{\"selector\": {";
             let close = "}";
             let eq =  ": {\"$eq\":";
+            let mut vec:Vec<String>;
+
             to_find = format!("{} {}", to_find, start_select);
             if request.clone().param.len() > 1{
                 to_find = format!("{}", to_find);
@@ -65,7 +68,7 @@ fn from_request_to_json(request: Request) -> String {
             let old_rev = request.param.get("_rev").unwrap();
             let mut res = format!("{} \"_rev\": \"{}\"", start, old_rev);
             for (key, val) in request.param{
-                if key!= "_rev".to_string() && key!= "id".to_string() {
+                if key!= "_rev".to_string() && key!= "_id".to_string() {
                     res = format!("{}, \"{}\": \"{}\"", res, key, val);
                 }
             }
@@ -130,7 +133,7 @@ async fn work(client : &mut Client, command: String, url_base_db: &String, usern
         Op::Update => {
             //  Query generation
             let data = from_request_to_json(req.clone());
-            let url= format!("{}/{}",url_base_db, req.param.get("id").unwrap());
+            let url= format!("{}/{}",url_base_db, req.param.get("_id").unwrap());
             debug!("Invoker | query to execute: {}", data);
 
             let query_result = client.put(url).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();

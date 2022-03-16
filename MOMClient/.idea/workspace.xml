@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dc9787aa-da33-4d43-895d-d741a10b6713" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../GenericFunctionWithFlag/GenericFunctionWithFlag.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../CouchDBInvoker/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../CouchDBInvoker/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GenericFunctionCouch/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../GenericFunctionCouch/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../MongoInvoker/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../MongoInvoker/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Stresser/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../Stresser/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +36,7 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../GenericFunctionCouch" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="settings.editor.selected.configurable" value="language.rust.cargo.check" />
   </component>
