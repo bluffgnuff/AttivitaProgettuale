@@ -188,14 +188,13 @@ fn server (mut conn : PooledConn, sub_command: Subscription){
     loop {
         // Stats on time to serve a request
         let start_time = SystemTime::now();
+
         // Consuming message
-        let command =  String::from_utf8_lossy(&sub_command.next().unwrap().data).to_string();
         // TODO waiting for a "close" message to break the loop ?
-        // let args = String::from_utf8_lossy(&sub_args.next().unwrap().data).to_string();
-        // debug!("Invoker | new req received: {}; args: {}",command, args);
+        let command =  String::from_utf8_lossy(&sub_command.next().unwrap().data).to_string();
         debug!("Invoker | new req received command: {}",command);
+
         n_reqs = n_reqs +1;
-        // work(&mut conn, command, args);
         work(&mut conn, command);
         let duration = SystemTime::now().duration_since(start_time).unwrap();
         info!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
