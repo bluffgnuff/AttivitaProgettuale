@@ -10,7 +10,7 @@ use std::fmt::Debug;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::time::{ SystemTime};
-use log::debug;
+use log::{debug, info};
 use mongodb::bson::{doc, Document};
 use mongodb::bson::oid::ObjectId;
 use mongodb::sync::{Client, Database};
@@ -162,7 +162,7 @@ fn server (mut conn: Database, sub_command: Subscription){
         n_reqs = n_reqs +1;
         work(&mut conn, command);
         let duration = SystemTime::now().duration_since(start_time).unwrap();
-        debug!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
+        info!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
     }
 }
 

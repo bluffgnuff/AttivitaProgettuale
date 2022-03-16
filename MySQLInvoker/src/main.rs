@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::time::{ SystemTime};
-use log::debug;
+use log::{debug, info};
 use mysql::prelude::*;
 use mysql::*;
 use nats::Subscription;
@@ -198,7 +198,7 @@ fn server (mut conn : PooledConn, sub_command: Subscription){
         // work(&mut conn, command, args);
         work(&mut conn, command);
         let duration = SystemTime::now().duration_since(start_time).unwrap();
-        debug!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
+        info!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
     }
 }
 

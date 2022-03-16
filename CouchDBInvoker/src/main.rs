@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::time::{ SystemTime};
-use log::{debug};
+use log::{debug, info};
 use nats::Subscription;
 use reqwest::Client;
 
@@ -188,7 +188,7 @@ fn server (mut client :Client, url_base_db: String, username: String, password: 
         // work(&mut conn, command, args);
         work(&mut client, command, &url_base_db, &username, &password);
         let duration = SystemTime::now().duration_since(start_time).unwrap();
-        debug!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
+        info!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
     }
 }
 
