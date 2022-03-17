@@ -184,20 +184,34 @@ fn work(conn: &mut mysql::PooledConn, command: String) {
 // fn server (mut conn : PooledConn, sub_command: Subscription, sub_args: Subscription){
 fn server (mut conn : PooledConn, sub_command: Subscription){
     let mut n_reqs = 0;
-
+    let mut total_duration = 0;
+    let mut max = 0;
+    let mut min = 0;
     loop {
-        // Stats on time to serve a request
-        let start_time = SystemTime::now();
-
         // Consuming message
         // TODO waiting for a "close" message to break the loop ?
         let command =  String::from_utf8_lossy(&sub_command.next().unwrap().data).to_string();
         debug!("Invoker | new req received command: {}",command);
 
+        // Stats on time to serve a request
+        let start_time = SystemTime::now();
         n_reqs = n_reqs +1;
         work(&mut conn, command);
         let duration = SystemTime::now().duration_since(start_time).unwrap();
+        total_duration = total_duration + duration.as_millis();
+
+        if duration.as_millis() > max{
+            max = duration.as_millis();
+        }
+
+        if duration.as_millis() < min || min == 0{
+            min = duration.as_millis();
+        }
+
         info!("Invoker | served the request number {}, in {} ms", n_reqs, duration.as_millis());
+        info!("Invoker | average latency {} ms", total_duration/n_reqs);
+        info!("Invoker | min latency {} ms", min);
+        info!("Invoker | max latency {} ms", max);
     }
 }
 

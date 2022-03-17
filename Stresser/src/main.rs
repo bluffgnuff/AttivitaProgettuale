@@ -8,8 +8,14 @@ fn main() {
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
     // let trigger_args = env::var("TRIGGER-ARGS").unwrap_or("trigger-args".to_string());
     // let group = env::var("GROUP").unwrap_or("default".to_string());
-    let command = env::var("COMMAND").unwrap_or("../GenericFunctionWithFlag/target/debug/GenericFunctionWithFlag".to_string());
-    let args = env::var("COMMAND-ARGS").unwrap_or("--operation Read  --table Customers --firstname Davide --lastname Rossi".to_string());
+    let command = env::var("COMMAND").unwrap_or("../MySQLGenericFunction/target/debug/MySQLGenericFunction".to_string());
+    let args = env::var("COMMAND-ARGS").unwrap_or("\"SELECT * FROM Customers WHERE FirstName = 'Mario';
+;\"".to_string());
+    // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Create --table Customers --firstname Mario --lastname Rossi".to_string());
+    // let args = env::var("COMMAND-ARGS").unwrap_or("--db-type MySQL --operation Create --table Customers --firstname Paolo --lastname Paoletti".to_string());
+    // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --firstname Mario --lastname Rossi --firstname-op Luca --firstname-op Villa".to_string());
+    // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --id --rev --firstname-op Luca --firstname-op Villa".to_string());
+    // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Delete --table Customers --id ".to_string());
     let sleep = env::var("SLEEP")
         .unwrap_or("1000000".to_string())
         .parse::<u64>()

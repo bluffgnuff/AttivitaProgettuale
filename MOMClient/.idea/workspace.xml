@@ -5,8 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dc9787aa-da33-4d43-895d-d741a10b6713" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../CouchDBInvoker/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../CouchDBInvoker/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../MongoInvoker/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../MongoInvoker/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../MySQLInvoker/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../MySQLInvoker/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../MySQLInvokerAlternative/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../MySQLInvokerAlternative/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../MySQLInvokerAlternative/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../MySQLInvokerAlternative/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Old/GenericFunctionCouch/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Old/GenericFunctionCouch/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Stresser/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/../Stresser/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
