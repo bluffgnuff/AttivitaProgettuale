@@ -1,37 +1,50 @@
 FROM rust:1.59 as builder2
 
-
+# 1. Create a new empty shell project
 RUN USER=root cargo new --bin GenericFunctionWithFlag
 WORKDIR ./GenericFunctionWithFlag
-COPY ./Cargo.toml ./Cargo.toml
-RUN cargo build  --release
+
+# 2. Copy our manifests
+COPY ./GenericFunctionWithFlag/Cargo.toml ./Cargo.toml
+
+
+# 3. Build only the dependencies to cache them
+RUN cargo build --release
 RUN rm src/*.rs
 
+# 4. Build source code
+COPY ./GenericFunctionWithFlag/src ./src
+ADD . ./
 RUN rm ./target/release/deps/GenericFunctionWithFlag*
 RUN cargo build --release
 
-ADD . ./
-
 FROM rust:1.59 as builder
 
-RUN USER=root cargo new --bin MySQLInvoker
+# 1. Create a new empty shell project
+RUN USER=root cargo new --bin CouchDBInvoker
+WORKDIR ./CouchDBInvoker
 
-WORKDIR ./MySQLInvoker
-COPY ./Cargo.toml ./Cargo.toml
+# 2. Copy our manifests
+COPY ./CouchDBInvoker/Cargo.toml ./Cargo.toml
+
+# 3. Build only the dependencies to cache them
 RUN cargo build --release
 RUN rm src/*.rs
 
-RUN rm ./target/release/deps/MySQLInvoker*
-RUN cargo build --release
+# 4. Build source code
+COPY ./CouchDBInvoker/src ./src
 
 ADD . ./
 
-FROM debian:buster-slim
+RUN rm ./target/release/deps/CouchDBInvoker*
+RUN cargo build --release
+
+FROM debian:bookworm-slim
 ARG APP=/usr/src/app
 
-#RUN apt-get update \
-#    && apt-get install -y ca-certificates tzdata \
-#    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update
+RUN apt-get install -y ca-certificates tzdata
+RUN rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Etc/UTC \
     APP_USER=appuser
@@ -40,21 +53,12 @@ RUN groupadd $APP_USER \
     && useradd -g $APP_USER $APP_USER \
     && mkdir -p ${APP}
 
-COPY --from=builder /MySQLInvoker/target/release/MySQLInvoker ${APP}/MySQLInvoker
-COPY --from=builder2 /GenericFunctionWithFlag/target/release/GenericFunctionWithFlag ${APP}/../GenericFunctionWithFlag
+COPY --from=builder /CouchDBInvoker/target/release/CouchDBInvoker ${APP}/
+COPY --from=builder2 /GenericFunctionWithFlag/target/release/GenericFunctionWithFlag ${APP}/
 
 RUN chown -R $APP_USER:$APP_USER ${APP}
 
 USER $APP_USER
 WORKDIR ${APP}
 
-CMD ["./MySQLInvoker"]
-
-## Usage
-#     docker build -f Dockerfile -t maitrenode:1.1 .
-## Run the image to test
-#     docker run -d --name maitrenode -p 8070:8070/tcp -p 8070:8070/udp maitrenode:1.1
-## Tag the image
-#     docker tag maitrenode:1.1 bluffgnuff/maitrenode:1.1
-## Register the image on DockerHub
-#     docker push bluffgnuff/maitrenode:1.1
+CMD ["./CouchDBInvoker"]
