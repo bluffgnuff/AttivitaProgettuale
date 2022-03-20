@@ -109,7 +109,6 @@ fn from_request_to_query(request: Request) -> String {
     }
 }
 
-// fn work(conn: &mut mysql::PooledConn, command: String, args: String) {
 fn work(conn: &mut mysql::PooledConn, command: String) {
     // Invoking the command
     let mut child = Command::new("/bin/bash").arg("-c").arg(&command)
@@ -181,7 +180,6 @@ fn work(conn: &mut mysql::PooledConn, command: String) {
     child_in.write_all(res_string_result_serialized.as_str().as_bytes());
 }
 
-// fn server (mut conn : PooledConn, sub_command: Subscription, sub_args: Subscription){
 fn server (mut conn : PooledConn, sub_command: Subscription){
     let mut n_reqs = 0;
     let mut total_duration = 0;
@@ -224,7 +222,6 @@ fn main() {
     let db = env::var("DB-NAME").unwrap_or("testDB".to_string());
     let nats_server = env::var("NATSSERVER").unwrap_or("127.0.0.1".to_string());
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
-    // let trigger_args = env::var("TRIGGER-ARGS").unwrap_or("trigger-args".to_string());
     let group = env::var("GROUP").unwrap_or("default".to_string());
     let url_db = format!("mysql://{}:{}@{}:{}/{}", username, password, address, port, db);
 
@@ -241,9 +238,6 @@ fn main() {
     debug!("Invoker | Connected to NATS {:?} ", nc);
     let sub_command = nc.queue_subscribe(&trigger_command, &group).unwrap();
     debug!("Invoker | Sub to command topic {:?}", sub_command);
-    // let sub_args = nc.queue_subscribe(&trigger_args, &group).unwrap();
-    // debug!("Invoker | Sub to args topic {:?} ", sub_args);
 
-    // server(conn, sub_command, sub_args );
     server(conn, sub_command);
 }

@@ -8,11 +8,10 @@ fn main() {
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
     // let trigger_args = env::var("TRIGGER-ARGS").unwrap_or("trigger-args".to_string());
     // let group = env::var("GROUP").unwrap_or("default".to_string());
-    let command = env::var("COMMAND").unwrap_or("../MySQLGenericFunction/target/debug/MySQLGenericFunction".to_string());
-    let args = env::var("COMMAND-ARGS").unwrap_or("\"SELECT * FROM Customers WHERE FirstName = 'Mario';
-;\"".to_string());
+    let command = env::var("COMMAND").unwrap_or("../GenericFunctionWithFlag/target/debug/GenericFunctionWithFlag".to_string());
+    // let args = env::var("COMMAND-ARGS").unwrap_or("\"SELECT * FROM Customers WHERE FirstName = 'Mario';\"".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Create --table Customers --firstname Mario --lastname Rossi".to_string());
-    // let args = env::var("COMMAND-ARGS").unwrap_or("--db-type MySQL --operation Create --table Customers --firstname Paolo --lastname Paoletti".to_string());
+    let args = env::var("COMMAND-ARGS").unwrap_or("--db-type MySQL --operation Read --table Customers --firstname Mario --lastname Rossi".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --firstname Mario --lastname Rossi --firstname-op Luca --firstname-op Villa".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --id --rev --firstname-op Luca --firstname-op Villa".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Delete --table Customers --id ".to_string());
@@ -35,6 +34,7 @@ fn main() {
     debug!("Client | start publishing to topic:{}", trigger_command);
 
     let nc = nats::connect(&nats_server).unwrap();
+    //let mut x = 2000;
     let mut x = sleep;
 
     while x >= minsleep {
@@ -53,6 +53,6 @@ fn main() {
             );
             thread::sleep(time::Duration::from_micros(x));
         }
-        x = x / 2;
+         x = x / 2;
     }
 }
