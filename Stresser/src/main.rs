@@ -4,6 +4,7 @@ use std::{thread, time};
 use std::time::SystemTime;
 
 fn main() {
+    env_logger::init();
     let nats_server = env::var("NATSSERVER").unwrap_or("127.0.0.1".to_string());
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
     // let trigger_args = env::var("TRIGGER-ARGS").unwrap_or("trigger-args".to_string());
@@ -34,23 +35,18 @@ fn main() {
     debug!("Client | start publishing to topic:{}", trigger_command);
 
     let nc = nats::connect(&nats_server).unwrap();
-    //let mut x = 2000;
     let mut x = sleep;
-
     while x >= minsleep {
         for i in 1..batchsize {
-            let mex = format!("{} {}", command, args);
-            nc.publish(&trigger_command, mex);
-            // nc.publish(&trigger_args, args);
-            let id = format!("{}.{}", x, i);
-            info!(
-                "STARTCHAIN msg:{}, start:{:?}",
-                id,
-                SystemTime::now()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .expect("time went backwards")
-                    .as_nanos()
-            );
+            let req_id = format!("{}.{}", x, i);
+            // Add the req id in the message arguments
+            let id_args = format!("{} --id {}",args, req_id);
+            let mex = format!("{} {}", command, id_args);
+
+            let send_time = SystemTime::now();
+            let resp = nc.request(&trigger_command, mex).unwrap();
+            info!("[RESPONSE_TIME] msg: {}, time: {}",req_id,SystemTime::now().duration_since(send_time).unwrap().as_micros());
+            debug!("{:?}", String::from_utf8_lossy(&resp.data).to_string());
             thread::sleep(time::Duration::from_micros(x));
         }
          x = x / 2;

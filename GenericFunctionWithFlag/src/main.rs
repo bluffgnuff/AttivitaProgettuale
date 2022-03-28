@@ -5,8 +5,8 @@ extern crate rmp_serde as rmps;
 use rmps::Serializer;
 use serde::{Serialize};
 use std::collections::HashMap;
-use std::io::Read;
-use log::debug;
+use std::io::{BufRead, Read};
+use log::{debug, info};
 use clap::Parser;
 
 //Usage env parameters --operation {CRUD operation} --id {ID} --rev {REV} --table {TABLE} --firstname {FIRSTNAME} --lastname {LASTNAME}  --firstname-op {FIRSTNAME-OP} --lastname-op {LASTNAME-OP}
@@ -74,13 +74,14 @@ fn main() {
     let mut customer: HashMap<String, String> = HashMap::new();
     let mut customer_new: HashMap<String, String> = HashMap::new();
 
+    // added an id column (not auto increment) in the DBs so the client can add it manually
     if args.id != "".to_string() {
-        if args.db_type == "MySQL" {
+        // if args.db_type == "MySQL" {
             customer.insert("id".to_string(), args.id);
-        }
-        else {
-            customer.insert("_id".to_string(), args.id);
-        }
+        // }
+        // else {
+        //     customer.insert("_id".to_string(), args.id);
+        // }
     }
 
     if args.rev != "".to_string() {
@@ -145,7 +146,7 @@ fn main() {
     println!("{:?}",req_pack);
     debug!("Request serialized sent {:?}", req_pack);
 
-    stdin.read_to_string(&mut result);
+    result = stdin.lock().lines().next().unwrap().unwrap();
 
     debug!("Data received: {:?}",result );
 
@@ -155,13 +156,14 @@ fn main() {
 //  Deserialize
     if args.operation == "Read" && args.db_type != "CouchDB" {
         let req :Vec<String> = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        debug!("Deserialized answer: {:?}",req);
+        let mut des_answ= String::new();
         for el in req {
-            debug!("{:?}", el);
+            des_answ = format!("{} {:?}", des_answ, el);
         }
+        println!("Deserialized answer {}", des_answ);
     }
     else{
         let req : String = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        debug!("Deserialized answer {:?}", req);
+        println!("Deserialized answer {:?}", req);
     }
 }
