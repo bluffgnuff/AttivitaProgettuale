@@ -160,10 +160,10 @@ fn main() {
         for el in req {
             des_answ = format!("{} {:?}", des_answ, el);
         }
-        println!("Deserialized answer {}", des_answ);
+        println!("{}", des_answ);
     }
     else{
         let req : String = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        println!("Deserialized answer {:?}", req);
+        println!("{:?}", req);
     }
 }

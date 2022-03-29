@@ -12,7 +12,7 @@ use std::time::{ SystemTime};
 use log::{debug, info};
 use mysql::prelude::*;
 use mysql::*;
-use nats::{Connection, Message, Subscription};
+use nats::{Subscription};
 //  Usage env parameters --URL {URL} --DB-NAME {DB-NAME} --COMMAND {COMMAND}
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
@@ -145,8 +145,8 @@ fn work(conn: &mut mysql::PooledConn, command: String, n_reqs:i32) -> String {
             // Send back a Vec<Row> to keep the invoker independent from the data type
             let start_time = SystemTime::now();
             let query_result :Vec<Row> = conn.query(query).unwrap();
-            let duration = SystemTime::now().duration_since(start_time).unwrap();
-            info!("[DB] request number {}: average latency {} ms", n_reqs, duration.as_micros());
+            let db_duration = SystemTime::now().duration_since(start_time).unwrap();
+            info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
             let mut query_string :Vec<String>= Vec::new();
             for el in query_result{
@@ -164,7 +164,7 @@ fn work(conn: &mut mysql::PooledConn, command: String, n_reqs:i32) -> String {
                  Err(_) =>String::from("Error")
             };
             let duration = SystemTime::now().duration_since(start_time).unwrap();
-            info!("[DB] request number {}: average latency {} ms", n_reqs, duration.as_micros());
+            info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, duration.as_micros());
 
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
@@ -210,6 +210,7 @@ fn server (mut conn : PooledConn, sub_command: Subscription){
         let start_time = SystemTime::now();
         let child_out = work(&mut conn, command, n_reqs.clone());
         let duration = SystemTime::now().duration_since(start_time).unwrap();
+
         total_duration = total_duration + duration.as_micros();
 
         if duration.as_micros() > max{
@@ -220,12 +221,16 @@ fn server (mut conn : PooledConn, sub_command: Subscription){
             min = duration.as_micros();
         }
         let average =  total_duration/(n_reqs as u128);
-
-        info!("[WORK_AVERAGE_LATENCY] request number {}: average latency {} ms", n_reqs, average);
-        info!("[WORK_MIN_LATENCY] request number {}: {} ms", n_reqs, min);
-        info!("[WORK_MAX_LATENCY] request number {}: max latency {} ms", n_reqs, max);
+        info!("[WORK_LATENCY] request number {}: latency {} μs", n_reqs, duration.as_micros());
+        info!("[WORK_AVERAGE_LATENCY] request number {}: average latency {} μs", n_reqs, average);
+        info!("[WORK_MIN_LATENCY] request number {}: {} μs", n_reqs, min);
+        info!("[WORK_MAX_LATENCY] request number {}: max latency {} μs", n_reqs, max);
         // answer to stresser
-        mex.respond(child_out).unwrap();
+        let res_answer = match mex.respond(child_out){
+            Ok(_) => String::from("Success"),
+            Err(_) =>String::from("Error")
+        };
+        debug!("Respond: {}", res_answer);
     }
 }
 
@@ -243,6 +248,7 @@ fn main() {
 
     debug!("Invoker | starts");
     debug!("Invoker | URL = {}", url_db);
+
     // Connection to DB
     let opts = Opts::from_url(url_db.as_str());
     let pool = Pool::new(opts.unwrap()).unwrap();
@@ -254,5 +260,6 @@ fn main() {
     debug!("Invoker | Connected to NATS {:?} ", nc);
     let sub_command = nc.queue_subscribe(&trigger_command, &group).unwrap();
     debug!("Invoker | Sub to command topic {:?}", sub_command);
+
     server(conn, sub_command);
 }

@@ -91,8 +91,8 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
                     Ok(_) => String::from("Success"),
                     Err(_) =>String::from("Error")
                 };
-            let duration = SystemTime::now().duration_since(start_time).unwrap();
-            info!("[DB] request number {}: average latency {} ms", n_reqs, duration.as_micros());
+            let db_duration = SystemTime::now().duration_since(start_time).unwrap();
+            info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
@@ -101,8 +101,8 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
             // Send back a Vec<Row> to keep the invoker independent from the data type
             let start_time = SystemTime::now();
             let query_result = conn.collection::<Document>(req.table.as_str()).find(document,None).unwrap();
-            let duration = SystemTime::now().duration_since(start_time).unwrap();
-            info!("[DB] request number {}: average latency {} ms", n_reqs, duration.as_micros());
+            let db_duration = SystemTime::now().duration_since(start_time).unwrap();
+            info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
             let mut query_string :Vec<String>= Vec::new();
             for el in query_result{
@@ -122,8 +122,8 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
                 Ok(_) => String::from("Success"),
                 Err(_) =>String::from("Error")
             };
-            let duration = SystemTime::now().duration_since(start_time).unwrap();
-            info!("[DB] request number {}: average latency {} ms", n_reqs, duration.as_micros());
+            let db_duration = SystemTime::now().duration_since(start_time).unwrap();
+            info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
@@ -135,8 +135,8 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
                     Ok(_) => String::from("Success"),
                     Err(_) =>String::from("Error")
                 };
-            let duration = SystemTime::now().duration_since(start_time).unwrap();
-            info!("[DB] request number {}: average latency {} ms", n_reqs, duration.as_micros());
+            let db_duration = SystemTime::now().duration_since(start_time).unwrap();
+            info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
             query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
@@ -160,9 +160,8 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
     child_in.write("\n".as_bytes());
 
     //return the child's output
-    debug!("Invoker | take the std out of the child");
     let res = child_out.next().unwrap().unwrap();
-    debug!("Invoker | taken");
+    debug!("Invoker | child output: {}", res);
     return  res;
 }
 
@@ -174,7 +173,7 @@ fn server (mut conn: Database, sub_command: Subscription){
     loop {
         // Consuming message
         let mex = sub_command.next().unwrap();
-        let command =  String::from_utf8_lossy(&sub_command.next().unwrap().data).to_string();
+        let command =  String::from_utf8_lossy(&mex.data).to_string();
         debug!("Invoker | new req received command: {}",command);
 
         n_reqs = n_reqs +1;
@@ -183,6 +182,7 @@ fn server (mut conn: Database, sub_command: Subscription){
         let start_time = SystemTime::now();
         let child_out = work(&mut conn, command, n_reqs.clone());
         let duration = SystemTime::now().duration_since(start_time).unwrap();
+
         total_duration = total_duration + duration.as_micros();
 
         if duration.as_micros() > max{
@@ -193,12 +193,16 @@ fn server (mut conn: Database, sub_command: Subscription){
             min = duration.as_micros();
         }
         let average =  total_duration/(n_reqs as u128);
-
-        info!("[WORK_AVERAGE_LATENCY] request number {}: average latency {} ms", n_reqs, average);
-        info!("[WORK_MIN_LATENCY] request number {}: {} ms", n_reqs, min);
-        info!("[WORK_MAX_LATENCY] request number {}: max latency {} ms", n_reqs, max);
+        info!("[WORK_LATENCY] request number {}: latency {} μs", n_reqs, duration.as_micros());
+        info!("[WORK_AVERAGE_LATENCY] request number {}: average latency {} μs", n_reqs, average);
+        info!("[WORK_MIN_LATENCY] request number {}: {} μs", n_reqs, min);
+        info!("[WORK_MAX_LATENCY] request number {}: max latency {} μs", n_reqs, max);
         // answer to stresser
-        mex.respond(child_out);
+        let res_answer = match mex.respond(child_out){
+            Ok(_) => String::from("Success"),
+            Err(_) =>String::from("Error")
+        };
+        debug!("Respond: {}", res_answer);
     }
 }
 
