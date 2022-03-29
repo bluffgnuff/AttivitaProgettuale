@@ -12,7 +12,7 @@ fn main() {
     let command = env::var("COMMAND").unwrap_or("../GenericFunctionWithFlag/target/debug/GenericFunctionWithFlag".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("\"SELECT * FROM Customers WHERE FirstName = 'Mario';\"".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Create --table Customers --firstname Mario --lastname Rossi".to_string());
-    let args = env::var("COMMAND-ARGS").unwrap_or("--db-type Mongo --operation Read --table Customers --firstname Mario --lastname Rossi".to_string());
+    let args = env::var("COMMAND_ARGS").unwrap_or("--db-type Mongo --operation Read --table Customers --firstname Mario --lastname Rossi".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --firstname Mario --lastname Rossi --firstname-op Luca --firstname-op Villa".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --id --rev --firstname-op Luca --firstname-op Villa".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Delete --table Customers --id ".to_string());

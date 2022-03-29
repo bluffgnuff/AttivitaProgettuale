@@ -240,7 +240,7 @@ fn main() {
     let port = env::var("PORT").unwrap_or("3306".to_string());
     let username = env::var("NAME").unwrap_or("root".to_string());
     let password = env::var("PASSWORD").unwrap_or("root".to_string());
-    let db = env::var("DB-NAME").unwrap_or("testDB".to_string());
+    let db = env::var("DB_NAME").unwrap_or("testDB".to_string());
     let nats_server = env::var("NATSSERVER").unwrap_or("127.0.0.1".to_string());
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
     let group = env::var("GROUP").unwrap_or("default".to_string());

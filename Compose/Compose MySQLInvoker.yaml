@@ -1,0 +1,39 @@
+version: '3'
+services:
+    nats:
+        image: nats:latest
+        networks:
+            - mysql_network
+    mysql_invoker:
+        image: docker.io/bluffgnuff/mysql_invoker:latest
+        environment:
+            ADDRESS: "172.19.0.2"
+            NATSSERVER: "172.19.0.3"
+            DB_NAME: "testDB"
+            PORT: 3306
+            NAME: root
+            PASSWORD: root
+            TRIGGER: "trigger-command"
+            RUST_LOG: "INFO"
+        networks:
+            - mysql_network
+    stresser:
+        image: docker.io/bluffgnuff/stresser:1.1
+        environment:
+            NATSSERVER: "172.19.0.3"
+            TRIGGER: "trigger-command"
+            COMMAND: "./GenericFunctionWithFlag"
+            COMMAND_ARGS: "--db-type Mysql --operation Read --table Customers --firstname Mario --lastname Rossi"
+            RUST_LOG: "INFO"
+        networks:
+            - mysql_network
+        depends_on:
+            - mysql_invoker
+networks:
+  mysql_network:
+    external:
+      name: mysql_network
+# First use:
+# - config a DB container
+# - docker network connect name_network container_name
+# docker-compose -f "Compose MySQLInvoker.yaml" up

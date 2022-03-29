@@ -210,7 +210,7 @@ fn main() {
     env_logger::init();
     let address = env::var("ADDRESS").unwrap_or("127.0.0.1".to_string());
     let port = env::var("PORT").unwrap_or("27017".to_string());
-    let db = env::var("DB-NAME").unwrap_or("testDB".to_string());
+    let db = env::var("DB_NAME").unwrap_or("testDB".to_string());
     let nats_server = env::var("NATSSERVER").unwrap_or("127.0.0.1".to_string());
     let trigger_command = env::var("TRIGGER").unwrap_or("trigger-command".to_string());
     let group = env::var("GROUP").unwrap_or("default".to_string());
