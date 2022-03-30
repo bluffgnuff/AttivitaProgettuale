@@ -17,10 +17,10 @@ ONLY_VAL="$4"
 
 if [[ $ONLY_VAL == "true" ]]
 then
-    cat output_temp_invoker.txt| grep DB_LATENCY |awk -F "$WORD " '{print $2}' | awk -F " " '{print $2}'
+    cat "$FILENAME"| grep "$PARAM" |awk -F "$WORD " '{print $2}' | awk -F " " '{print $2}'
 elif [[ $WORD != "" ]]
 then
-    cat output_temp_invoker.txt| grep DB_LATENCY |awk -F "$WORD " '{print $2}'
+    cat "$FILENAME"| grep "$PARAM" |awk -F "$WORD " '{print $2}'
 else
     cat "$FILENAME"| grep "$PARAM"
 fi
