@@ -5,8 +5,8 @@ extern crate rmp_serde as rmps;
 use rmps::Serializer;
 use serde::{Serialize};
 use std::collections::HashMap;
-use std::io::{BufRead, Read};
-use log::{debug, info};
+use std::io::{BufRead};
+use log::{debug};
 use clap::Parser;
 
 //Usage env parameters --operation {CRUD operation} --id {ID} --rev {REV} --table {TABLE} --firstname {FIRSTNAME} --lastname {LASTNAME}  --firstname-op {FIRSTNAME-OP} --lastname-op {LASTNAME-OP}
@@ -63,25 +63,20 @@ struct Request {
     op: Op,
     table: String,
     param: HashMap<String, String>,
-    param_to_up: Option<HashMap<String, String>>,
+    param_to_up: Option<HashM1ap<String, String>>,
 }
 
 fn main() {
     env_logger::init();
     let args = Args::parse();
-    let mut stdin = std::io::stdin();
-    let mut result = String::new();
+    let stdin = std::io::stdin();
+    let result;
     let mut customer: HashMap<String, String> = HashMap::new();
     let mut customer_new: HashMap<String, String> = HashMap::new();
 
     // added an id column (not auto increment) in the DBs so the client can add it manually
     if args.id != "".to_string() {
-        // if args.db_type == "MySQL" {
             customer.insert("id".to_string(), args.id);
-        // }
-        // else {
-        //     customer.insert("_id".to_string(), args.id);
-        // }
     }
 
     if args.rev != "".to_string() {
@@ -142,28 +137,32 @@ fn main() {
 
     let mut req_pack = Vec::new();
     req.serialize(&mut Serializer::new(&mut req_pack)).unwrap();
-
+    // Send req through stdout
     println!("{:?}",req_pack);
     debug!("Request serialized sent {:?}", req_pack);
 
+    // Receive the answer through stdin
     result = stdin.lock().lines().next().unwrap().unwrap();
-
     debug!("Data received: {:?}",result );
 
-    let req_serialized:Vec<u8> = result.split(", ").map(|x| x.parse().unwrap()).collect();
-    debug!("Serialized answer {:?}", req_serialized);
-
 //  Deserialize
-    if args.operation == "Read" && args.db_type != "CouchDB" {
+    if args.operation == "Read"{
+        let req_serialized:Vec<u8> = result.split(", ").map(|x| x.parse().unwrap()).collect();
+        debug!("Serialized answer {:?}", req_serialized);
         let req :Vec<String> = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        let mut des_answ= String::new();
-        for el in req {
-            des_answ = format!("{} {:?}", des_answ, el);
+
+        if args.db_type != "CouchDB" {
+            let mut des_answ= String::new();
+            for el in req {
+                des_answ = format!("{} {:?}", des_answ, el);
+            }
+            println!("{}", des_answ);
         }
-        println!("{}", des_answ);
+        else { // case CouchDB
+            println!("{:?}", req);
+        }
     }
     else{
-        let req : String = rmp_serde::from_read_ref(&req_serialized).unwrap();
-        println!("{:?}", req);
+        println!("{:?}", result);
     }
 }

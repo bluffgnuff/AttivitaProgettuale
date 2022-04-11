@@ -140,7 +140,7 @@ fn work(conn: &mut mysql::PooledConn, command: String, n_reqs:i32) -> String {
 
     //  Query execution
     let mut result_serialized  = Vec::new();
-    match req.op{
+    let answer = match req.op{
         Op::Read =>{
             // Send back a Vec<Row> to keep the invoker independent from the data type
             let start_time = SystemTime::now();
@@ -155,6 +155,21 @@ fn work(conn: &mut mysql::PooledConn, command: String, n_reqs:i32) -> String {
             debug!("Invoker | res: {:?}", query_string);
             query_string.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
+
+            // Conversion to string
+            let mut string_result_serialized = String::new();
+            let mut first = true;
+
+            for el in result_serialized {
+                if first {
+                    string_result_serialized= format!("{}", el);
+                    first = false;
+                }
+                else {
+                    string_result_serialized = format!("{}, {}", string_result_serialized, el);
+                }
+            }
+            string_result_serialized
         },
         Op::Create | Op::Update | Op::Delete => {
             let start_time = SystemTime::now();
@@ -166,25 +181,13 @@ fn work(conn: &mut mysql::PooledConn, command: String, n_reqs:i32) -> String {
             let duration = SystemTime::now().duration_since(start_time).unwrap();
             info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, duration.as_micros());
 
-            query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
-            debug!("Invoker | result serialized: {:?}", result_serialized);
+            query_result
         },
-    }
+    };
     //	Send back an answer
-    let mut res_string_result_serialized = String::new();
-    let mut first = true;
+    debug!("Invoker | sent the result {}", answer);
 
-    for el in result_serialized {
-        if first {
-            res_string_result_serialized= format!("{}", el);
-            first = false;
-        }
-        else {
-            res_string_result_serialized = format!("{}, {}", res_string_result_serialized, el);
-        }
-    }
-    debug!("Invoker | sent the result {}", res_string_result_serialized);
-    child_in.write_all(res_string_result_serialized.as_str().as_bytes());
+    child_in.write_all(answer.as_str().as_bytes());
     child_in.write("\n".as_bytes());
 
     //return the child's output

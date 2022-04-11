@@ -28,7 +28,7 @@ enum Op {
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 struct Request {
     op: Op,
-    table : String,
+    table: String,
     param: HashMap<String, String>,
     param_to_up: Option<HashMap<String, String>>,
 }
@@ -73,7 +73,7 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
     let req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
     debug!("Invoker | serialized request {:?}", req_serialized);
 
-    //  Deserialize
+    //  Deserialize Req
     let req: Request = rmp_serde::from_read_ref(&req_serialized).unwrap();
     debug!("Invoker | deserialized request {:?}", req);
 
@@ -83,7 +83,7 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
 
     //  Query execution
     let mut result_serialized  = Vec::new();
-    match req.op{
+    let answer = match req.op{
         Op::Create => {
             let start_time = SystemTime::now();
             let query_result =
@@ -94,8 +94,7 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
             let db_duration = SystemTime::now().duration_since(start_time).unwrap();
             info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
-            query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
-            debug!("Invoker | result serialized: {:?}", result_serialized);
+            query_result
         },
         Op::Read => {
             // Send back a Vec<Row> to keep the invoker independent from the data type
@@ -112,6 +111,20 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
 
             query_string.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
             debug!("Invoker | result serialized: {:?}", result_serialized);
+
+            let mut res_string_result_serialized = String::new();
+            let mut first = true;
+
+            for el in result_serialized {
+                if first {
+                    res_string_result_serialized= format!("{}", el);
+                    first = false;
+                }
+                else {
+                    res_string_result_serialized = format!("{}, {}", res_string_result_serialized, el);
+                }
+            }
+            res_string_result_serialized
         },
         Op::Update => {
             let update_doc = from_param_to_doc(req.param_to_up.unwrap(), true);
@@ -125,8 +138,7 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
             let db_duration = SystemTime::now().duration_since(start_time).unwrap();
             info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
-            query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
-            debug!("Invoker | result serialized: {:?}", result_serialized);
+            query_result
         },
         Op::Delete => {
             let start_time = SystemTime::now();
@@ -138,25 +150,12 @@ fn work(conn: &mut Database, command: String, n_reqs:i32) -> String {
             let db_duration = SystemTime::now().duration_since(start_time).unwrap();
             info!("[DB_LATENCY] request number {}: latency {} μs", n_reqs, db_duration.as_micros());
 
-            query_result.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
-            debug!("Invoker | result serialized: {:?}", result_serialized);
+            query_result
         },
-    }
+    };
     //	Send back an answer
-    let mut res_string_result_serialized = String::new();
-    let mut first = true;
-
-    for el in result_serialized {
-        if first {
-            res_string_result_serialized= format!("{}", el);
-            first = false;
-        }
-        else {
-            res_string_result_serialized = format!("{}, {}", res_string_result_serialized, el);
-        }
-    }
-    debug!("Invoker | sent the result {}", res_string_result_serialized);
-    child_in.write_all(res_string_result_serialized.as_str().as_bytes());
+    debug!("Invoker | sent the result {}", answer);
+    child_in.write_all(answer.as_str().as_bytes());
     child_in.write("\n".as_bytes());
 
     //return the child's output
