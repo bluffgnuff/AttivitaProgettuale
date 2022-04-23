@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CouchDBInvoker.iml" filepath="$PROJECT_DIR$/CouchDBInvoker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MySQLGenericFunction.iml" filepath="$PROJECT_DIR$/MySQLGenericFunction.iml" />
     </modules>
   </component>
 </project>

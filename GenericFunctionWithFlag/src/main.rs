@@ -63,7 +63,7 @@ struct Request {
     op: Op,
     table: String,
     param: HashMap<String, String>,
-    param_to_up: Option<HashM1ap<String, String>>,
+    param_to_up: Option<HashMap<String, String>>,
 }
 
 fn main() {
@@ -137,15 +137,16 @@ fn main() {
 
     let mut req_pack = Vec::new();
     req.serialize(&mut Serializer::new(&mut req_pack)).unwrap();
-    // Send req through stdout
+
+    //  Send req through stdout
     println!("{:?}",req_pack);
     debug!("Request serialized sent {:?}", req_pack);
 
-    // Receive the answer through stdin
+    //  Receive the answer through stdin
     result = stdin.lock().lines().next().unwrap().unwrap();
     debug!("Data received: {:?}",result );
 
-//  Deserialize
+    //  Deserialize
     if args.operation == "Read"{
         let req_serialized:Vec<u8> = result.split(", ").map(|x| x.parse().unwrap()).collect();
         debug!("Serialized answer {:?}", req_serialized);

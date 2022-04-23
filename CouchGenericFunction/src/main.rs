@@ -1,7 +1,8 @@
-use log::{debug};
+use log::{debug, info};
 use reqwest::Client;
 use std::{env};
 use std::collections::HashMap;
+use std::time::SystemTime;
 use clap::Parser;
 
 //Usage env parameters --operation {CRUD operation} --id {ID} --rev {REV} --table {TABLE} --firstname {FIRSTNAME} --lastname {LASTNAME}  --firstname-op {FIRSTNAME-OP} --lastname-op {LASTNAME-OP}
@@ -62,8 +63,8 @@ struct Request {
     param_to_up: Option<HashMap<String, String>>,
 }
 
-// Convert a Request to a CouchDB query
-fn from_request_to_json(request: &Request) -> String {
+//  Convert a Request to a CouchDB query
+fn from_request_to_json(request: Request) -> String {
     debug!("Type of operation requested: {:?}", request.op);
     match request.op {
         Op::Create => {
@@ -109,7 +110,7 @@ fn from_request_to_json(request: &Request) -> String {
     }
 }
 
-// Execute the operation on DB
+//  Execute the operation on DB
 async fn execute_operation(client: Client, url_base_db: String, username: String, password: String, req: Request, data: String) -> String{
     let res = match req.op{
         Op::Create => {
@@ -142,6 +143,7 @@ async fn execute_operation(client: Client, url_base_db: String, username: String
 async fn main() {
     env_logger::init();
     let args = Args::parse();
+    //  DB parameters should be provided through environment or as at command invocation (the invoker provides the command args at launch)?
     let username = env::var("NAME").unwrap_or("root".to_string());
     let password = env::var("PASSWORD").unwrap_or("root".to_string());
     let address = env::var("ADDRESS").unwrap_or("127.0.0.1".to_string());
@@ -151,7 +153,7 @@ async fn main() {
     let mut customer: HashMap<String, String> = HashMap::new();
     let mut customer_new: HashMap<String, String> = HashMap::new();
 
-    // added an id column (not auto increment) in the DBs so the client can add it manually
+    //  added an id column (not auto increment) in the DBs so the client can add it manually
     if args.id != "".to_string() {
         customer.insert("id".to_string(), args.id);
     }
@@ -177,7 +179,7 @@ async fn main() {
 
     debug!("Operation selected: {}", args.operation);
 
-    // Request building
+    //  Request building
     let req =
         match args.operation.as_str() {
             "Create" =>
@@ -187,7 +189,6 @@ async fn main() {
                     param: customer,
                     param_to_up: Option::from(customer_new),
                 },
-            // Update
             "Update" =>
                 Request {
                     op: Op::Update,
@@ -195,7 +196,6 @@ async fn main() {
                     param: customer,
                     param_to_up: Option::from(customer_new),
                 },
-            // Delete
             "Delete" =>
                 Request {
                     op: Op::Delete,
@@ -203,7 +203,6 @@ async fn main() {
                     param: customer,
                     param_to_up: Option::from(customer_new),
                 },
-            // Read
             "Read" | _ =>
                 Request {
                     op: Op::Read,
@@ -214,21 +213,20 @@ async fn main() {
         };
     debug!("Request: {:?}", req);
 
-    // TODO manage JSON string and extract _id; need this ?
-    // let data_received;
-    // if args.json != "".to_string() {
-    //     data_received = serde_json::from_str(&args.json).unwrap();
-    // }
-
-    // Client HTTP
+    //  Client HTTP
     let client = Client::builder().build().unwrap();
     debug!("Client created to DB: {:?}", client);
 
-    // Json Document Generation
-    let data = from_request_to_json(&req);
+    //  Json Document Generation
+    let data = from_request_to_json(req.clone());
     debug!("Json: {:?}", data);
-    // Operation execution
-    let res  = execute_operation(client, url_base_db, username, password, req, data).await;
-    //Send the result to the invoker
+
+    //  Operation execution
+    let start_time = SystemTime::now();
+    let res  = execute_operation(client, url_base_db, username, password, req.clone(), data).await;
+    let db_duration = SystemTime::now().duration_since(start_time).unwrap();
+    info!("[DB_LATENCY] request id {}: latency {} μs", req.param.get("id").unwrap(), db_duration.as_micros());
+
+    //  Send the result to the invoker
     println!("{}", res);
 }
