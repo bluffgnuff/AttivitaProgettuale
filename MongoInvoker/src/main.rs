@@ -59,7 +59,7 @@ fn work(conn: &mut Database, command: String) -> String {
         .stdout(Stdio::piped())
         .spawn().unwrap();
 
-    debug!("Invoker | child launched PID = {}", child.id());
+    debug!("Child launched PID = {}", child.id());
 
     let child_in = child.stdin.as_mut().unwrap();
     let mut child_out = BufReader::new(child.stdout.unwrap()).lines();
@@ -68,18 +68,18 @@ fn work(conn: &mut Database, command: String) -> String {
     let mut out = child_out.next().unwrap().unwrap();
     out.remove(0);
     out.remove(out.len()-1);
-    debug!("Invoker | request cleaned {:?}", out);
+    debug!("Request cleaned {:?}", out);
 
     let req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
-    debug!("Invoker | serialized request {:?}", req_serialized);
+    debug!("Serialized request {:?}", req_serialized);
 
     //  Deserialize Req
     let req: Request = rmp_serde::from_read_ref(&req_serialized).unwrap();
-    debug!("Invoker | deserialized request {:?}", req);
+    debug!("Deserialized request {:?}", req);
 
     //  Document generation
     let document = from_param_to_doc(req.param, false);
-    debug!("Invoker | document to execute: {}", document);
+    debug!("Document to execute: {}", document);
 
     //  Query execution
     let mut result_serialized  = Vec::new();
@@ -107,10 +107,10 @@ fn work(conn: &mut Database, command: String) -> String {
             for el in query_result{
                 query_string.push(format!("{:?}", el.unwrap()));
             }
-            debug!("Invoker | res: {:?}", query_string);
+            debug!("Res: {:?}", query_string);
 
             query_string.serialize(&mut Serializer::new(&mut result_serialized)).unwrap();
-            debug!("Invoker | result serialized: {:?}", result_serialized);
+            debug!("Result serialized: {:?}", result_serialized);
 
             let mut res_string_result_serialized = String::new();
             let mut first = true;
@@ -154,13 +154,13 @@ fn work(conn: &mut Database, command: String) -> String {
         },
     };
     //	Send back an answer
-    debug!("Invoker | sent the result {}", answer);
+    debug!("Sent the result {}", answer);
     child_in.write_all(answer.as_str().as_bytes());
     child_in.write("\n".as_bytes());
 
     //return the child's output
     let res = child_out.next().unwrap().unwrap();
-    debug!("Invoker | child output: {}", res);
+    debug!("Child output: {}", res);
     return  res;
 }
 
@@ -170,42 +170,29 @@ fn server (mut conn: Database, nc: Connection, trigger_command: String, trigger_
     let mut max = 0;
     let mut min = 0;
 
-    let mut total_latency_conf = 0;
-    let mut max_conf = 0;
-    let mut min_conf = 0;
-    let ack =1;
     let sub_command = nc.queue_subscribe(trigger_command.as_str(), group.as_str()).unwrap();
-    debug!("Invoker | Sub to command topic {:?}", sub_command);
+    debug!("Sub to command topic {:?}", sub_command);
 
     loop {
         // Consuming message
         let mex = sub_command.next().unwrap();
-        mex.respond(ack.to_string());
+        let received_header = mex.headers.unwrap();
+        let req_id = received_header.get("id").unwrap();
         let command =  String::from_utf8_lossy(&mex.data).to_string();
-        debug!("Invoker | New req received command: {}",command);
+        debug!("New request: {} received command: {}", req_id, command);
 
         // Launch operation
         n_reqs = n_reqs +1;
         let start_time = SystemTime::now();
         let child_out = work(&mut conn, command);
         let work_latency = SystemTime::now().duration_since(start_time).unwrap();
-        debug!("Invoker | Child ouput: {}",child_out);
+        debug!("Child ouput: {}",child_out);
 
         // Answer to stresser
-        let message_time = SystemTime::now();
-        let conf = nc.request(&trigger_answer, child_out).unwrap();
-        let conf_latency = SystemTime::now().duration_since(message_time).unwrap();
-        debug!("Invoker | Answer confirmed");
-
-        // Update general stats response
-        total_latency_conf = total_latency_conf + conf_latency.as_micros();
-        if conf_latency.as_micros() > max{
-            max_conf = conf_latency.as_micros();
-        }
-        if conf_latency.as_micros() < min || min == 0{
-            min_conf = conf_latency.as_micros();
-        }
-        let average_conf = total_latency_conf/(n_reqs as u128);
+        let mut headers = nats::HeaderMap::new();
+        headers.append("id", req_id);
+        nc.publish_with_reply_or_headers(&trigger_answer, None, Option::Some(&headers), child_out).unwrap();
+        debug!("Answer to {} sent", req_id);
 
         // Update general stats work
         total_latency = total_latency + work_latency.as_micros();
@@ -218,11 +205,6 @@ fn server (mut conn: Database, nc: Connection, trigger_command: String, trigger_
         let average = total_latency/(n_reqs as u128);
 
         // Print Stats
-        info!("[MESSAGE_LATENCY] request number {}: latency {} μs", n_reqs, conf_latency.as_micros());
-        info!("[MESSAGE_AVERAGE_LATENCY] request number {}: latency {} μs", n_reqs, average_conf);
-        info!("[MESSAGE_MIN_LATENCY] request number {}: latency {} μs", n_reqs, min_conf);
-        info!("[MESSAGE_MAX_LATENCY] request number {}: latency {} μs", n_reqs, max_conf);
-
         info!("[WORK_LATENCY] request number {}: latency {} μs", n_reqs, work_latency.as_micros());
         info!("[WORK_AVERAGE_LATENCY] request number {}: average latency {} μs", n_reqs, average);
         info!("[WORK_MIN_LATENCY] request number {}: {} μs", n_reqs, min);
@@ -241,18 +223,18 @@ fn main() {
     let group = env::var("GROUP").unwrap_or("default".to_string());
     let url_db = format!("mongodb://{}:{}", address, port);
 
-    debug!("Invoker | starts");
-    debug!("Invoker | URL = {}", url_db);
+    debug!("Starts");
+    debug!("URL = {}", url_db);
 
     // Connection to DB
     let client = Client::with_uri_str(url_db).unwrap();
     let conn = client.database(db.as_str());
-    debug!("Invoker | Connected to DB: {:?}", conn);
+    debug!("Connected to DB: {:?}", conn);
 
     // Connection to MOM
     let nc = nats::connect(nats_server.as_str()).unwrap();
-    debug!("Invoker | Connected to NATS {:?} ", nc);
-    debug!("Invoker | start publishing to topic:{}", trigger_answer);
+    debug!("Connected to NATS {:?} ", nc);
+    debug!("Start publishing to topic:{}", trigger_answer);
 
     server(conn, nc, trigger_command, trigger_answer, group);
 }

@@ -1,0 +1,34 @@
+# ------------------ MySQLGenericFunction
+FROM rust:1.59 as builder1
+WORKDIR ./MySQLGenericFunction
+COPY ./MySQLGenericFunction .
+RUN cargo install --path .
+
+# ------------------ MongoGenericFunction
+FROM rust:1.59 as builder2
+WORKDIR ./MongoGenericFunction
+COPY ./MongoGenericFunction .
+RUN cargo install --path .
+
+# ------------------ CouchGenericFunction
+FROM rust:1.59 as builder3
+WORKDIR ./CouchGenericFunction
+COPY ./CouchGenericFunction .
+RUN cargo install --path .
+
+# ------------------ InvokerNoConnection
+FROM rust:1.59 as builder4
+
+WORKDIR ./InvokerNoConnection
+COPY ./InvokerNoConnection .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+COPY --from=builder1 /MySQLGenericFunction/target/release/MySQLGenericFunction ${APP}/
+COPY --from=builder2 /MongoGenericFunction/target/release/MongoGenericFunction ${APP}/
+COPY --from=builder3 /CouchGenericFunction/target/release/CouchGenericFunction ${APP}/
+COPY --from=builder4 /InvokerNoConnection/target/release/InvokerNoConnection ${APP}/
+
+CMD ["./InvokerNoConnection"]

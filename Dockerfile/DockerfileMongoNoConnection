@@ -1,0 +1,20 @@
+# ------------------ MongoGenericFunction
+FROM rust:1.59 as builder1
+WORKDIR ./MongoGenericFunction
+COPY ./MongoGenericFunction .
+RUN cargo install --path .
+
+# ------------------ InvokerNoConnection
+FROM rust:1.59 as builder2
+
+WORKDIR ./InvokerNoConnection
+COPY ./InvokerNoConnection .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+COPY --from=builder1 /MongoGenericFunction/target/release/MongoGenericFunction ${APP}/
+COPY --from=builder2 /InvokerNoConnection/target/release/InvokerNoConnection ${APP}/
+
+CMD ["./InvokerNoConnection"]

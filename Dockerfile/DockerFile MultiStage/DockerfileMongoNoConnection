@@ -1,42 +1,41 @@
 FROM rust:1.59 as builder2
 
 # 1. Create a new empty shell project
-RUN USER=root cargo new --bin GenericFunctionWithFlag
-WORKDIR ./GenericFunctionWithFlag
+RUN USER=root cargo new --bin MongoGenericFunction
+WORKDIR ./MongoGenericFunction
 
 # 2. Copy our manifests
-COPY ./GenericFunctionWithFlag/Cargo.toml ./Cargo.toml
-
+COPY ./MongoGenericFunction/Cargo.toml ./Cargo.toml
 
 # 3. Build only the dependencies to cache them
 RUN cargo build --release
 RUN rm src/*.rs
 
 # 4. Build source code
-COPY ./GenericFunctionWithFlag/src ./src
+COPY ./MongoGenericFunction/src ./src
 ADD . ./
-RUN rm ./target/release/deps/GenericFunctionWithFlag*
+RUN rm ./target/release/deps/MongoGenericFunction*
 RUN cargo build --release
 
 FROM rust:1.59 as builder
 
 # 1. Create a new empty shell project
-RUN USER=root cargo new --bin CouchDBInvoker
-WORKDIR ./CouchDBInvoker
+RUN USER=root cargo new --bin InvokerNoConnection
+WORKDIR ./InvokerNoConnection
 
 # 2. Copy our manifests
-COPY ./CouchDBInvoker/Cargo.toml ./Cargo.toml
+COPY ./InvokerNoConnection/Cargo.toml ./Cargo.toml
 
 # 3. Build only the dependencies to cache them
 RUN cargo build --release
 RUN rm src/*.rs
 
 # 4. Build source code
-COPY ./CouchDBInvoker/src ./src
+COPY ./InvokerNoConnection/src ./src
 
 ADD . ./
 
-RUN rm ./target/release/deps/CouchDBInvoker*
+RUN rm ./target/release/deps/InvokerNoConnection*
 RUN cargo build --release
 
 FROM debian:bookworm-slim
@@ -53,12 +52,12 @@ RUN groupadd $APP_USER \
     && useradd -g $APP_USER $APP_USER \
     && mkdir -p ${APP}
 
-COPY --from=builder /CouchDBInvoker/target/release/CouchDBInvoker ${APP}/
-COPY --from=builder2 /GenericFunctionWithFlag/target/release/GenericFunctionWithFlag ${APP}/
+COPY --from=builder /InvokerNoConnection/target/release/InvokerNoConnection ${APP}/
+COPY --from=builder2 /MongoGenericFunction/target/release/MongoGenericFunction ${APP}/
 
 RUN chown -R $APP_USER:$APP_USER ${APP}
 
 USER $APP_USER
 WORKDIR ${APP}
 
-CMD ["./CouchDBInvoker"]
+CMD ["./InvokerNoConnection"]
