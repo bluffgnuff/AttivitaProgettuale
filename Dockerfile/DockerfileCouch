@@ -14,6 +14,8 @@ RUN cargo install --path .
 # ------------------ debian
 FROM debian:bookworm-slim
 
+RUN apt-get -y install openssl
+
 COPY --from=builder1 /CouchGenericFunction/target/release/CouchGenericFunction ${APP}/
 COPY --from=builder2 /InvokerNoConnection/target/release/InvokerNoConnection ${APP}/
 

@@ -170,7 +170,7 @@ async fn main() {
         customer.insert("LASTNAME".to_string(), args.lastname);
     }
 
-    if args.lastname_opt != "".to_string() {
+    if args.firstname_opt != "".to_string() {
         customer_new.insert("FIRSTNAME".to_string(), args.firstname_opt);
     }
     if args.lastname_opt != "".to_string() {

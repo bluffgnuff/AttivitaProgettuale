@@ -2,10 +2,11 @@
 extern crate serde_derive;
 extern crate rmp_serde as rmps;
 
-use rmps::Serializer;
+use rmps::{Serializer, to_vec};
 use serde::{Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead};
+use std::slice::from_raw_parts_mut;
 use log::{debug};
 use clap::Parser;
 
@@ -91,7 +92,7 @@ fn main() {
         customer.insert("LASTNAME".to_string(), args.lastname);
     }
 
-    if args.lastname_opt != "".to_string() {
+    if args.firstname_opt != "".to_string() {
         customer_new.insert("FIRSTNAME".to_string(), args.firstname_opt);
     }
     if args.lastname_opt != "".to_string() {

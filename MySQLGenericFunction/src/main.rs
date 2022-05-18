@@ -19,7 +19,7 @@ struct Args {
     #[clap(short, long, default_value = "Customers" )]
     table: String,
 
-    // id of the entry to read/update/delete
+    // id of the entry to create/read/update/delete
     #[clap(long, default_value = "" )]
     id:String,
 
@@ -42,9 +42,6 @@ struct Args {
     // Lastname to Update
     #[clap(long, default_value = "" )]
     lastname_opt: String,
-
-    #[clap(long, default_value = "" )]
-    db_type: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -209,7 +206,7 @@ fn main() {
     if args.lastname != "".to_string() {
         customer.insert("LASTNAME".to_string(), args.lastname);
     }
-    if args.lastname_opt != "".to_string() {
+    if args.firstname_opt != "".to_string() {
         customer_new.insert("FIRSTNAME".to_string(), args.firstname_opt);
     }
     if args.lastname_opt != "".to_string() {

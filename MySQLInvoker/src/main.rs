@@ -123,14 +123,18 @@ fn work(conn: &mut mysql::PooledConn, command: String) -> String {
 
     //  Receive
     let mut out = child_out.next().unwrap().unwrap();
+    debug!("Request {:?}", out);
     out.remove(0);
     out.remove(out.len()-1);
     debug!("Request cleaned {:?}", out);
 
-    let req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
+    let mut req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
     debug!("Serialized request {:?}", req_serialized);
 
     //  Deserialize
+    // let req: String = rmp_serde::from_slice(&req_serialized).unwrap();
+    // debug!("Deserialized request {:?}", req);
+
     let req: Request = rmp_serde::from_read_ref(&req_serialized).unwrap();
     debug!("Deserialized request {:?}", req);
 

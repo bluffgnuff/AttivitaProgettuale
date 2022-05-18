@@ -26,6 +26,8 @@ RUN cargo install --path .
 # ------------------ debian
 FROM debian:bookworm-slim
 
+RUN apt-get update && apt-get -y install openssl
+
 COPY --from=builder1 /MySQLGenericFunction/target/release/MySQLGenericFunction ${APP}/
 COPY --from=builder2 /MongoGenericFunction/target/release/MongoGenericFunction ${APP}/
 COPY --from=builder3 /CouchGenericFunction/target/release/CouchGenericFunction ${APP}/

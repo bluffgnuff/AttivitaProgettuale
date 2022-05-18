@@ -1,0 +1,34 @@
+plugins {
+    //edited
+    id 'application'
+}
+
+//edited
+application {
+    mainClass = 'genericfunction.JavaGenericFunctionWithFlag'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    // https://mvnrepository.com/artifact/commons-cli/commons-cli
+    implementation 'commons-cli:commons-cli:1.5.0'
+
+    // https://mvnrepository.com/artifact/org.msgpack/msgpack-core
+    implementation 'org.msgpack:msgpack-core:0.8.24'
+
+    // https://mvnrepository.com/artifact/org.msgpack/jackson-dataformat-msgpack
+    implementation 'org.msgpack:jackson-dataformat-msgpack:0.8.24'
+}
+
+test {
+    useJUnitPlatform()
+}
