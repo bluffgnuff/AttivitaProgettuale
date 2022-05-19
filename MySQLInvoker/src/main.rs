@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate serde_derive;
+extern crate rmpv;
 extern crate rmp_serde as rmps;
 
 use rmps::Serializer;
@@ -7,12 +8,14 @@ use serde::Serialize;
 use std::{env, str};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
+use std::iter::Map;
 use std::process::{Command, Stdio};
 use std::time::{SystemTime};
 use log::{debug, info};
 use mysql::prelude::*;
 use mysql::*;
 use nats::{Connection};
+use crate::serde_json::Deserializer;
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 enum Op {
@@ -131,10 +134,6 @@ fn work(conn: &mut mysql::PooledConn, command: String) -> String {
     let mut req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
     debug!("Serialized request {:?}", req_serialized);
 
-    //  Deserialize
-    // let req: String = rmp_serde::from_slice(&req_serialized).unwrap();
-    // debug!("Deserialized request {:?}", req);
-
     let req: Request = rmp_serde::from_read_ref(&req_serialized).unwrap();
     debug!("Deserialized request {:?}", req);
 
@@ -145,7 +144,7 @@ fn work(conn: &mut mysql::PooledConn, command: String) -> String {
     //  Query execution
     let mut result_serialized  = Vec::new();
     let answer = match req.op{
-        Op::Read =>{
+        Op::Read=>{
             // Send back a Vec<Row> to keep the invoker independent from the data type
             let start_time = SystemTime::now();
             let query_result :Vec<Row> = conn.query(query).unwrap();
@@ -175,7 +174,7 @@ fn work(conn: &mut mysql::PooledConn, command: String) -> String {
             }
             string_result_serialized
         },
-        Op::Create | Op::Update | Op::Delete => {
+        Op::Create| Op::Update | Op::Delete => {
             let start_time = SystemTime::now();
             let query_result =
              match conn.query_drop(query){

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 mysql = "*"
 rmp-serde = "1.0.0"
+rmpv = "1.0.0"
 serde = "*"
 serde_derive = "*"
 log = "0.4.14"

@@ -9,188 +9,194 @@ import org.msgpack.jackson.dataformat.MessagePackFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JavaGenericFunctionWithFlag {
 
-    public static void main(String[] args) {
-        Map<String, String> env = System.getenv();
-        String username = env.getOrDefault("NAME", "root");
-        String password = env.getOrDefault("PASSWORD", "root");
-        String address = env.getOrDefault("ADDRESS", "127.0.0.1");
-        String port = env.getOrDefault("PORT", "3306");
-        String db_name = env.getOrDefault("DB-NAME", "testDB");
+	public static void main(String[] args) {
+		Map<String, String> env = System.getenv();
+		String username = env.getOrDefault("NAME", "root");
+		String password = env.getOrDefault("PASSWORD", "root");
+		String address = env.getOrDefault("ADDRESS", "127.0.0.1");
+		String port = env.getOrDefault("PORT", "3306");
+		String db_name = env.getOrDefault("DB-NAME", "testDB");
 
-        HashMap<String, String> customer = new HashMap<String, String>();
-        HashMap<String, String> customer_new = new HashMap<String, String>();
-        String table = "";
-        String operation = "";
+		HashMap<String, String> customer = new HashMap<String, String>();
+		HashMap<String, String> customer_new = new HashMap<String, String>();
+		String table = "";
+		String operation = "Read";
 
-        CommandLine commandLine;
+		CommandLine commandLine;
 //		Controllo argomenti
-        Options options = new Options();
-        Option OptionTable = Option.builder("t")
-                .required(false)
-                .desc("The table in which work")
-                .longOpt("table")
-                .hasArg()
-                .build();
-        options.addOption(OptionTable);
+		Options options = new Options();
+		Option OptionTable = Option.builder("t")
+				.required(false)
+				.desc("The table in which work")
+				.longOpt("table")
+				.hasArg()
+				.build();
+		options.addOption(OptionTable);
 
-        Option OptionOperation = Option.builder("o")
-                .required(false)
-                .desc("The operation to execute")
-                .longOpt("operation")
-                .hasArg()
-                .build();
-        options.addOption(OptionOperation);
+		Option OptionOperation = Option.builder("o")
+				.required(false)
+				.desc("The operation to execute")
+				.longOpt("operation")
+				.hasArg()
+				.build();
+		options.addOption(OptionOperation);
 
-        // added an id column (not auto increment) in the DBs so the client can add it manually
-        Option OptionId = Option.builder("i")
-                .required(false)
-                .desc("The new entry ID")
-                .longOpt("id")
-                .hasArg()
-                .build();
-        options.addOption(OptionId);
+		// added an id column (not auto increment) in the DBs so the client can add it manually
+		Option OptionId = Option.builder("i")
+				.required(false)
+				.desc("The new entry ID")
+				.longOpt("id")
+				.hasArg()
+				.build();
+		options.addOption(OptionId);
 
-        Option OptionFirstname = Option.builder("f")
-                .required(false)
-                .desc("The new entry firstname")
-                .longOpt("firstname")
-                .hasArg()
-                .build();
-        options.addOption(OptionFirstname);
+		Option OptionFirstname = Option.builder("f")
+				.required(false)
+				.desc("The new entry firstname")
+				.longOpt("firstname")
+				.hasArg()
+				.build();
+		options.addOption(OptionFirstname);
 
-        Option OptionLastname = Option.builder("l")
-                .required(false)
-                .desc("The new entry lastname")
-                .longOpt("lastname")
-                .hasArg()
-                .build();
-        options.addOption(OptionLastname);
+		Option OptionLastname = Option.builder("l")
+				.required(false)
+				.desc("The new entry lastname")
+				.longOpt("lastname")
+				.hasArg()
+				.build();
+		options.addOption(OptionLastname);
 
-        Option OptionLastname_opt = Option.builder("lo")
-                .required(false)
-                .desc("The the new lastname for the old entry")
-                .longOpt("lastname_opt")
-                .hasArg()
-                .build();
-        options.addOption(OptionLastname_opt);
+		Option OptionLastname_opt = Option.builder("lo")
+				.required(false)
+				.desc("The the new lastname for the old entry")
+				.longOpt("lastname_opt")
+				.hasArg()
+				.build();
+		options.addOption(OptionLastname_opt);
 
-        Option OptionFirstname_opt = Option.builder("fo")
-                .required(false)
-                .desc("The the new firstname for the old entry")
-                .longOpt("firstname_opt")
-                .hasArg()
-                .build();
-        options.addOption(OptionFirstname_opt);
+		Option OptionFirstname_opt = Option.builder("fo")
+				.required(false)
+				.desc("The the new firstname for the old entry")
+				.longOpt("firstname_opt")
+				.hasArg()
+				.build();
+		options.addOption(OptionFirstname_opt);
 
-        CommandLineParser commandLineParser = new DefaultParser();
-        try {
-            commandLine = commandLineParser.parse(options, args);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+		CommandLineParser commandLineParser = new DefaultParser();
+		try {
+			commandLine = commandLineParser.parse(options, args);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
 
-        if (commandLine.hasOption("table")) {
-            table = commandLine.getOptionValue("table");
-        }
+		if (commandLine.hasOption("table")) {
+			table = commandLine.getOptionValue("table");
+		}
 
-        if (commandLine.hasOption("operation")) {
-            operation = commandLine.getOptionValue("operation");
-        }
+		if (commandLine.hasOption("operation")) {
+			operation = commandLine.getOptionValue("operation");
+		}
 
-        if (commandLine.hasOption("id")) {
-            customer.put("id", commandLine.getOptionValue("id"));
-        }
+		if (commandLine.hasOption("id")) {
+			customer.put("id", commandLine.getOptionValue("id"));
+		}
 
-        if (commandLine.hasOption("firstname")) {
-            customer.put("firstname", commandLine.getOptionValue("firstname"));
-        }
+		if (commandLine.hasOption("firstname")) {
+			customer.put("firstname", commandLine.getOptionValue("firstname"));
+		}
 
-        if (commandLine.hasOption("lastname")) {
-            customer.put("lastname", commandLine.getOptionValue("lastname"));
-        }
+		if (commandLine.hasOption("lastname")) {
+			customer.put("lastname", commandLine.getOptionValue("lastname"));
+		}
 
-        if (commandLine.hasOption("lastname_opt")) {
-            customer_new.put("lastname_opt", commandLine.getOptionValue("lastname_opt"));
-        }
+		if (commandLine.hasOption("lastname_opt")) {
+			customer_new.put("lastname_opt", commandLine.getOptionValue("lastname_opt"));
+		}
 
-        if (commandLine.hasOption("firstname_opt")) {
-            customer_new.put("firstname_opt", commandLine.getOptionValue("firstname_opt"));
-        }
+		if (commandLine.hasOption("firstname_opt")) {
+			customer_new.put("firstname_opt", commandLine.getOptionValue("firstname_opt"));
+		}
 
-        //GenericFunction.Request { op: Create, table: "Customers", param: {"id": "1000000-3", "LASTNAME": "Rossi", "FIRSTNAME": "Giuseppe"}, param_to_up: Some({}) }
-//        Request req = new Request(Op.valueOf(operation), table, customer, Optional.empty());
+		Request req = new Request(Op.valueOf(operation), table, customer, null);
 
-        ObjectMapper mapper = new ObjectMapper(new MessagePackFactory());
-        int obj = 42;
+		ObjectMapper mapper = new ObjectMapper(new MessagePackFactory());
+		Map<String, Object> obj = new HashMap<String, Object>();
+		obj.put("Request", req);
+		obj.put("op", req.getOp());
+		obj.put("table", req.getTable());
+		obj.put("param", req.getParam());
+		obj.put("param_to_up", req.getParam_to_up());
+
+		try {
+			byte[] bytes = mapper.writeValueAsBytes(obj);
+
+			Boolean first = true;
+			StringBuilder req_builder = new StringBuilder();
+
+			req_builder.append("[");
+			for (Byte el : bytes) {
+				if (first) {
+					first = false;
+				} else {
+					req_builder.append(", ");
+				}
+				int uint8 = el & 0xFF;
+				req_builder.append(uint8);
+			}
+			req_builder.append("]");
+
+			//  Send req through stdout
+			System.out.println(req_builder);
+
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+		//  Receive the answer through stdin
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		String result;
+		try {
+			result = br.readLine();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		if (req.getOp().equals(Op.Read)) {
+			//  Deserialize
+			try {
+//				let req_serialized:Vec<u8> =result.split(", ").map( | x | x.parse().unwrap()).collect();
 
 
-//"[148, 166, 67, 114, 101, 97, 116, 101, 169, 67, 117, 115, 116, 111, 109, 101, 114, 115, 131, 169, 70, 73, 82, 83, 84, 78, 65, 77, 69, 168, 71, 105, 117, 115, 101, 112, 112, 101, 162, 105, 100, 169, 49, 48, 48, 48, 48, 48, 48, 45, 50, 168, 76, 65, 83, 84, 78, 65, 77, 69, 165, 82, 111, 115, 115, 105, 128]"
-        //  GenericFunction.Request packaging
-        byte [] req_pack;
+				// Deserialize
+//				bs = new byte[] {(byte) 148, (byte) 164, 122, 101, 114, 111, 1,
+//						(byte) 203, 64, 0, 0, 0, 0, 0, 0, 0, (byte) 192};
+//				TypeReference<List<Object>> typeReference = new TypeReference<List<Object>>(){};
+//				List<Object> xs = objectMapper.readValue(bs, typeReference);
 
-        try {
-            req_pack = mapper.writeValueAsBytes(obj);
-            StringBuilder req_builder = new StringBuilder();
+				String[] byteValues = result.split(", ");
+				byte[] bs = new byte[byteValues.length];
 
-            req_builder.append("[");
-            Boolean first = true;
-            for(byte el : req_pack) {
-                if (first){
-                    first=false;
-                }
-                else{
-                    req_builder.append(", ");
-                }
-                req_builder.append(el);
-            }
-            req_builder.append("]");
+				for (int i=0; i<bs.length; i++) {
+					bs[i] = (byte) Integer.parseInt(byteValues[i].trim());
+				}
 
-            //  Send req through stdout
-            System.out.println(req_builder.toString());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+				TypeReference<List<Object>> typeReference = new TypeReference<List<Object>>(){};
+				List<Object> result_deserialized = mapper.readValue(bs, typeReference);
 
-        //  Receive the answer through stdin
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String result;
-        try {
-            result = br.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-//        debug!("Data received: {:?}",result );
-
-        //  Deserialize
-//         req_serialized
-        try {
-            String gnagna = mapper.readValue(result, new TypeReference<String>(){});
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-//        if ( operation == "Read") {
-//            let req_serialized:Vec<u8> = result.split(", ").map(|x| x.parse().unwrap()).collect();
-//            debug!("Serialized answer {:?}", req_serialized);
-//            let req :Vec<String> = rmp_serde::from_read_ref(&req_serialized).unwrap();
-//
-//            if (args.db_type != "CouchDB" ){
-//                let mut des_answ= String::new();
-//                for el in req {
-//                    des_answ = format!("{} {:?}", des_answ, el);
-//                }
-//                println!("{}", des_answ);
-//            }
-//            else { // case CouchDB
-//                    println!("{:?}", req);
-//                }
-//            }
-//        else{
-//                println!("{:?}", result);
-//        }
-    }
+				System.out.println(result_deserialized);
+//				req :Vec<String> =rmp_serde::from_read_ref ( & req_serialized).unwrap();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			System.out.println(result);
+		}
+	}
 }
+
