@@ -5,7 +5,8 @@ import org.apache.commons.cli.*;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 public class JavaMySQLGenericFunction {
 
@@ -22,6 +23,11 @@ public class JavaMySQLGenericFunction {
 		HashMap<String, String> customer_new = new HashMap<String, String>();
 		String table = "";
 		String operation = "";
+
+		// Create a Logger
+		Logger logger
+				= Logger.getLogger(
+				JavaMySQLGenericFunction.class.getName());
 
 		CommandLine commandLine;
 //		Controllo argomenti
@@ -181,17 +187,29 @@ public class JavaMySQLGenericFunction {
 				query = queryBuilder.toString();
 			}
 //			Answer to Invoker
-			if(operation.equals("Create")){
+			if (operation.equals("Create")) {
 				Statement stm = conn.prepareStatement(query);
+				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
 				stm.execute(query);
+				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long latencyMicros = (after - before) / 1000;
+
+				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
+
 				String result = "ESEGUITO";
 				System.out.println(result);
-			}else{
+			} else {
 				Statement stm = conn.createStatement();
+				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
 				ResultSet result = stm.executeQuery(query);
-				while(result.next()){
-					for(String col : customer.keySet()) {
-						System.out.print(result.getString(col) +" ");
+				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long latencyMicros = (after - before) / 1000;
+
+				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
+
+				while (result.next()) {
+					for (String col : customer.keySet()) {
+						System.out.print(result.getString(col) + " ");
 					}
 				}
 			}

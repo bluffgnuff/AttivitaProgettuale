@@ -1,6 +1,6 @@
 package mongo.function;
 
-import com.mongodb.*;
+import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -9,7 +9,9 @@ import org.bson.Document;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
 //--table Customers --operation Read --id idProva2 --firstname NomeProva --lastname CognomeProva
 public class JavaMongoGenericFunction {
 
@@ -20,12 +22,16 @@ public class JavaMongoGenericFunction {
 		String address = env.getOrDefault("ADDRESS", "127.0.0.1");
 		String port = env.getOrDefault("PORT", "27017");
 		String db_name = env.getOrDefault("DB-NAME", "testDB");
-		
+
 		HashMap<String, String> customer = new HashMap<String, String>();
 		HashMap<String, String> customer_new = new HashMap<String, String>();
 		String table = "";
 		String operation = "";
 
+		// Create a Logger
+		Logger logger
+				= Logger.getLogger(
+				JavaMongoGenericFunction.class.getName());
 		CommandLine commandLine;
 //		Controllo argomenti
 		Options options = new Options();
@@ -133,13 +139,25 @@ public class JavaMongoGenericFunction {
 			Document document = new Document();
 			document.putAll(customer);
 
-			if(operation.equals("Create")){
+			if (operation.equals("Create")) {
+				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
 				collection.insertOne(document);
+				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long latencyMicros = (after - before) / 1000;
+
+				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
+
 				String result = "FINITO!!";
 				System.out.println(result);
-			}else{
+			} else {
+				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
 				FindIterable<Document> result = collection.find(document);
-				for(var doc : result){
+				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long latencyMicros = (after - before) / 1000;
+
+				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
+
+				for (var doc : result) {
 					System.out.println(doc);
 				}
 

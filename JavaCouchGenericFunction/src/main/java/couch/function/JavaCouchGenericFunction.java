@@ -8,14 +8,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 //--table Customers --operation Read --id idProva2 --firstname NomeProva --lastname CognomeProva
 public class JavaCouchGenericFunction {
@@ -34,6 +34,11 @@ public class JavaCouchGenericFunction {
 		HashMap<String, String> customer_new = new HashMap<String, String>();
 		String table = "";
 		String operation = "";
+
+		// Create a Logger
+		Logger logger
+				= Logger.getLogger(
+				JavaCouchGenericFunction.class.getName());
 
 		CommandLine commandLine;
 //		Controllo argomenti
@@ -113,9 +118,9 @@ public class JavaCouchGenericFunction {
 		if (commandLine.hasOption("id")) {
 			customer.put("id", commandLine.getOptionValue("id"));
 		}
-        if (commandLine.hasOption("_rev")){
+		if (commandLine.hasOption("_rev")) {
 			customer.put("_rev", commandLine.getOptionValue("_rev"));
-        }
+		}
 
 		if (commandLine.hasOption("firstname")) {
 			customer.put("firstname", commandLine.getOptionValue("firstname"));
@@ -151,22 +156,27 @@ public class JavaCouchGenericFunction {
 					selector.put(entry.getKey(), entry.getValue());
 				}
 //				Send Request
-				try(OutputStream os = con.getOutputStream()) {
-					byte[] input = selector.toString().getBytes("utf-8");
+				try (OutputStream os = con.getOutputStream()) {
+					long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+					byte[] input = selector.toString().getBytes(StandardCharsets.UTF_8);
+					long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+					long latencyMicros = (after - before) / 1000;
+					logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
+
 					os.write(input, 0, input.length);
 				}
 //				Receive Response
-				try(BufferedReader br = new BufferedReader(
-						new InputStreamReader(con.getInputStream(), "utf-8"))) {
+				try (BufferedReader br = new BufferedReader(
+						new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
 					StringBuilder response = new StringBuilder();
 					String responseLine = null;
 					while ((responseLine = br.readLine()) != null) {
 						response.append(responseLine.trim());
 					}
-					System.out.println(response.toString());
+					System.out.println(response);
 				}
 			} else {
-				URL url = new URL(url_db+"/_find");
+				URL url = new URL(url_db + "/_find");
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				String encoding = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
 				con.setRequestProperty("Authorization", "Basic " + encoding);
@@ -185,29 +195,29 @@ public class JavaCouchGenericFunction {
 				document.put("selector", selector);
 
 //				Send Request
-				try(OutputStream os = con.getOutputStream()) {
-					byte[] input = document.toString().getBytes("utf-8");
+				try (OutputStream os = con.getOutputStream()) {
+
+					long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+					byte[] input = document.toString().getBytes(StandardCharsets.UTF_8);
+					long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+					long latencyMicros = (after - before) / 1000;
+
+					logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
 					os.write(input, 0, input.length);
 				}
 
 //				Receive Response
-				try(BufferedReader br = new BufferedReader(
-						new InputStreamReader(con.getInputStream(), "utf-8"))) {
+				try (BufferedReader br = new BufferedReader(
+						new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
 					StringBuilder response = new StringBuilder();
 					String responseLine = null;
 					while ((responseLine = br.readLine()) != null) {
 						response.append(responseLine.trim());
 					}
-					System.out.println(response.toString());
+					System.out.println(response);
 				}
 			}
-		} catch (NumberFormatException e) {
-			throw new RuntimeException(e);
-		} catch (ProtocolException e) {
-			throw new RuntimeException(e);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		} catch (IOException e) {
+		} catch (NumberFormatException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

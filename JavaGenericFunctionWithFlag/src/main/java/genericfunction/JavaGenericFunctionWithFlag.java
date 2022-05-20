@@ -170,15 +170,6 @@ public class JavaGenericFunctionWithFlag {
 		if (req.getOp().equals(Op.Read)) {
 			//  Deserialize
 			try {
-//				let req_serialized:Vec<u8> =result.split(", ").map( | x | x.parse().unwrap()).collect();
-
-
-				// Deserialize
-//				bs = new byte[] {(byte) 148, (byte) 164, 122, 101, 114, 111, 1,
-//						(byte) 203, 64, 0, 0, 0, 0, 0, 0, 0, (byte) 192};
-//				TypeReference<List<Object>> typeReference = new TypeReference<List<Object>>(){};
-//				List<Object> xs = objectMapper.readValue(bs, typeReference);
-
 				String[] byteValues = result.split(", ");
 				byte[] bs = new byte[byteValues.length];
 
@@ -190,7 +181,6 @@ public class JavaGenericFunctionWithFlag {
 				List<Object> result_deserialized = mapper.readValue(bs, typeReference);
 
 				System.out.println(result_deserialized);
-//				req :Vec<String> =rmp_serde::from_read_ref ( & req_serialized).unwrap();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

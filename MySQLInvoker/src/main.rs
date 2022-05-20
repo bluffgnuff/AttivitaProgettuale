@@ -131,7 +131,7 @@ fn work(conn: &mut mysql::PooledConn, command: String) -> String {
     out.remove(out.len()-1);
     debug!("Request cleaned {:?}", out);
 
-    let mut req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
+    let mut req_serialized:Vec<u8> = out.split(",").map(|x| x.trim().parse().unwrap()).collect();
     debug!("Serialized request {:?}", req_serialized);
 
     let req: Request = rmp_serde::from_read_ref(&req_serialized).unwrap();

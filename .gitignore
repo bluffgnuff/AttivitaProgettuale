@@ -1,1 +1,5 @@
 /ToBuild
+*/target
+*/build
+*/.idea
+*/node_modules
