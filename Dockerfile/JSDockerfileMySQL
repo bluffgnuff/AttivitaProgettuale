@@ -1,0 +1,22 @@
+# ------------------ GenericFunctionWithFlag
+FROM node:latest as builder1
+WORKDIR ./JSGenericFunctionWithFlag
+COPY ./JSGenericFunctionWithFlag .
+
+RUN npm i @msgpack/msgpack            
+RUN npm install prompt 
+
+# ------------------ MySQLInvoker
+FROM rust:1.59 as builder2
+
+WORKDIR ./MySQLInvoker
+COPY ./MySQLInvoker .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+COPY --from=builder1 /JSGenericFunctionWithFlag/ ${APP}/JSGenericFunctionWithFlag/
+COPY --from=builder2 /MySQLInvoker/target/release/MySQLInvoker ${APP}/
+
+CMD ["./MySQLInvoker"]

@@ -189,9 +189,9 @@ public class JavaMySQLGenericFunction {
 //			Answer to Invoker
 			if (operation.equals("Create")) {
 				Statement stm = conn.prepareStatement(query);
-				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long before = System.nanoTime();
 				stm.execute(query);
-				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long after = System.nanoTime();
 				long latencyMicros = (after - before) / 1000;
 
 				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
@@ -200,9 +200,9 @@ public class JavaMySQLGenericFunction {
 				System.out.println(result);
 			} else {
 				Statement stm = conn.createStatement();
-				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long before = System.nanoTime();
 				ResultSet result = stm.executeQuery(query);
-				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long after = System.nanoTime();
 				long latencyMicros = (after - before) / 1000;
 
 				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");

@@ -1,0 +1,18 @@
+# ------------------ InvokerNoConnection
+FROM rust:1.59 as builder4
+
+WORKDIR ./InvokerNoConnection
+COPY ./InvokerNoConnection .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get -y install openssl && apt-get -y install default-jre
+
+COPY /JavaMongoGenericFunction/build/install/JavaMongoGenericFunction ${APP}/
+COPY /JavaMySQLGenericFunction/build/install/JavaMySQLGenericFunction ${APP}/
+COPY /JavaCouchGenericFunction/build/install/JavaCouchGenericFunction ${APP}/
+COPY --from=builder4 /InvokerNoConnection/target/release/InvokerNoConnection ${APP}/
+
+CMD ["./InvokerNoConnection"]

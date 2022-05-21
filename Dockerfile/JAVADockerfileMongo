@@ -1,0 +1,22 @@
+# ------------------ GenericFunctionWithFlag
+#FROM rust:1.59 as builder1
+#WORKDIR ./GenericFunctionWithFlag
+#COPY ./GenericFunctionWithFlag .
+#RUN cargo install --path .
+
+# ------------------ MongoInvoker
+FROM rust:1.59 as builder2
+
+WORKDIR ./MongoInvoker
+COPY ./MongoInvoker .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get -y install openssl && apt-get -y install default-jre
+
+COPY /JavaGenericFunctionWithFlag/build/install/JavaGenericFunctionWithFlag ${APP}/
+COPY --from=builder2 /MongoInvoker/target/release/MongoInvoker ${APP}/
+
+CMD ["./MongoInvoker"]

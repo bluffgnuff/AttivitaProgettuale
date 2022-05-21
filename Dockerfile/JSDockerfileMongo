@@ -1,0 +1,22 @@
+# ------------------ GenericFunctionWithFlag
+FROM node:latest as builder1
+WORKDIR ./JSGenericFunctionWithFlag
+COPY ./JSGenericFunctionWithFlag .
+
+RUN npm i @msgpack/msgpack            
+RUN npm install prompt 
+
+# ------------------ MongoInvoker
+FROM rust:1.59 as builder2
+
+WORKDIR ./MongoInvoker
+COPY ./MongoInvoker .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+COPY --from=builder1 /JSGenericFunctionWithFlag/ ${APP}/JSGenericFunctionWithFlag/
+COPY --from=builder2 /MongoInvoker/target/release/MongoInvoker ${APP}/
+
+CMD ["./MongoInvoker"]

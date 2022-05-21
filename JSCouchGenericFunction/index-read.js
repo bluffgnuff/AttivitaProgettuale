@@ -1,6 +1,4 @@
 const axios = require('axios');
-var msgpck= require ('@msgpack/msgpack');
-const prompt = require ('prompt');
 prompt.start();
 
 const axiosUrlComposer = (host, port) => { return 'http://' + host + ':' + port }
@@ -99,7 +97,7 @@ function basicPolicy(nodes){
   return getNodeMango(param, db)
 }
 
-var id = process.argv[3];
+var id = process.argv[4];
 var create = {op: 1, table: "Customers", param: {"firstname": "Luca","lastname":"Rossi", "id":id }, param_to_up: null };
 
 //var read = {op: 2, table: "Customers", param: {"firstname": "Luca","lastname":"Rossi", "id":"id-0000" }, param_to_up: null };
@@ -117,10 +115,10 @@ var res = addDoc(create.param, db);
 //var res = getNodeMango(par_to_find, db);
 var after = new Date().getTime();
 //latenza 
-var latecy = after - before;
+var latecy = (after - before)*1000;
 
 //print info level
-console.info(latecy);
+console.info("[DB_LATENCY] "+latecy);
 
 //Print result
 res.then( data => console.log(data));

@@ -140,19 +140,19 @@ public class JavaMongoGenericFunction {
 			document.putAll(customer);
 
 			if (operation.equals("Create")) {
-				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long before = System.nanoTime();
 				collection.insertOne(document);
-				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
-				long latencyMicros = (after - before) / 1000;
+				long after = System.nanoTime();
+				long latencyMicros = (after - before)/1000 ;
 
 				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
 
 				String result = "FINITO!!";
 				System.out.println(result);
 			} else {
-				long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long before = System.nanoTime();
 				FindIterable<Document> result = collection.find(document);
-				long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+				long after = System.nanoTime();
 				long latencyMicros = (after - before) / 1000;
 
 				logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");

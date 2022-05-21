@@ -1,0 +1,17 @@
+# ------------------ MySQLInvoker
+FROM rust:1.59 as builder2
+
+WORKDIR ./MySQLInvoker
+COPY ./MySQLInvoker .
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get -y install openssl && apt-get -y install default-jre
+
+# Client callme through ./bin/JavaGenericFunctionWithFlag
+COPY /JavaGenericFunctionWithFlag/build/install/JavaGenericFunctionWithFlag ${APP}/
+COPY --from=builder2 /MySQLInvoker/target/release/MySQLInvoker ${APP}/
+
+CMD ["./MySQLInvoker"]

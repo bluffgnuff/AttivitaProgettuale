@@ -1,5 +1,7 @@
+use futures::executor;
+use isahc::prelude::*;
+use isahc::{prelude::*, Request as isahcRequest};
 use log::{debug, info};
-use reqwest::Client;
 use std::{env};
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -111,36 +113,35 @@ fn from_request_to_json(request: Request) -> String {
 }
 
 //  Execute the operation on DB
-async fn execute_operation(client: Client, url_base_db: String, username: String, password: String, req: Request, data: String) -> String{
-    let res = match req.op{
+async fn execute_operation(url_base_db: String, username: String, password: String, req: Request, data: String) -> String{
+    let mut res = match req.op{
         Op::Create => {
-            let query_result = client.post(url_base_db).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
+            let query_result = isahc::Request::post(url_base_db).header("Content-Type", "application/json").body(data).unwrap().send().unwrap();
             query_result
         },
         Op::Read =>{
             let url= format!("{}/_find",url_base_db);
 
-            let query_result = client.post(url).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
+            let query_result = isahc::Request::post(url).header("Content-Type", "application/json").body(data).unwrap().send().unwrap();
             query_result
         },
         Op::Update => {
             let url= format!("{}/{}",url_base_db, req.param.get("id").unwrap() );
 
-            let query_result = client.put(url).basic_auth(username, Some(password)).body(data).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
+            let query_result = isahc::Request::put(url).header("Content-Type", "application/json").body(data).unwrap().send().unwrap();
             query_result
         },
         Op::Delete => {
             let url= format!("{}/{}",url_base_db, data);
 
-            let query_result = client.delete(url).basic_auth(username, Some(password)).header("Content-Type", "application/json").send().await.unwrap().text().await.unwrap();
+            let query_result = isahc::Request::delete(url).header("Content-Type", "application/json").body(data).unwrap().send().unwrap();
             query_result
         },
     };
-    res
+    res.text().unwrap()
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     env_logger::init();
     let args = Args::parse();
     //  DB parameters should be provided through environment or as at command invocation (the invoker provides the command args at launch)?
@@ -213,17 +214,13 @@ async fn main() {
         };
     debug!("Request: {:?}", req);
 
-    //  Client HTTP
-    let client = Client::builder().build().unwrap();
-    debug!("Client created to DB: {:?}", client);
-
     //  Json Document Generation
     let data = from_request_to_json(req.clone());
     debug!("Json: {:?}", data);
 
     //  Operation execution
     let start_time = SystemTime::now();
-    let res  = execute_operation(client, url_base_db, username, password, req.clone(), data).await;
+    let res  = executor::block_on(execute_operation(url_base_db, username, password, req.clone(), data));
     let db_duration = SystemTime::now().duration_since(start_time).unwrap();
     info!("[DB_LATENCY] request id {}: latency {} μs", req.param.get("id").unwrap(), db_duration.as_micros());
 

@@ -1,0 +1,41 @@
+# ------------------ MySQLGenericFunction
+FROM node:latest as builder1
+WORKDIR ./JSMySQLGenericFunction
+COPY ./JSMySQLGenericFunction .
+
+RUN npm i mysql
+
+# ------------------ MongoGenericFunction
+FROM node:latest as builder2
+WORKDIR ./JSMongoGenericFunction
+COPY ./JSMongoGenericFunction .
+
+RUN npm i moongose        
+
+# ------------------ CouchGenericFunction
+FROM node:latest as builder3
+WORKDIR ./JSCouchGenericFunction
+COPY ./JSCouchGenericFunction .
+
+RUN npm install uuid  
+RUN npm i axios
+
+# ------------------ InvokerNoConnection
+FROM rust:1.59 as builder4
+
+WORKDIR ./InvokerNoConnection
+COPY ./InvokerNoConnection .
+
+RUN cargo install --path .
+
+# ------------------ debian
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get -y install openssl
+
+COPY --from=builder1 /JSMySQLGenericFunction/ ${APP}/JSMySQLGenericFunction/
+COPY --from=builder2 /JSMongoGenericFunction/ ${APP}/JSMongoGenericFunction/
+COPY --from=builder3 /JSCouchGenericFunction/ ${APP}/JSCouchGenericFunction/
+COPY --from=builder4 /InvokerNoConnection/target/release/InvokerNoConnection ${APP}/
+
+CMD ["./InvokerNoConnection"]

@@ -70,7 +70,7 @@ fn work(conn: &mut Database, command: String) -> String {
     out.remove(out.len()-1);
     debug!("Request cleaned {:?}", out);
 
-    let req_serialized:Vec<u8> = out.split(", ").map(|x| x.parse().unwrap()).collect();
+    let req_serialized:Vec<u8> = out.split(",").map(|x| x.trim().parse().unwrap()).collect();
     debug!("Serialized request {:?}", req_serialized);
 
     //  Deserialize Req

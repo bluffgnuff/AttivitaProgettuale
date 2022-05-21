@@ -155,13 +155,13 @@ public class JavaCouchGenericFunction {
 				for (var entry : customer.entrySet()) {
 					selector.put(entry.getKey(), entry.getValue());
 				}
+
 //				Send Request
+				long before;
+				long after;
 				try (OutputStream os = con.getOutputStream()) {
-					long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
+					before = System.nanoTime();
 					byte[] input = selector.toString().getBytes(StandardCharsets.UTF_8);
-					long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
-					long latencyMicros = (after - before) / 1000;
-					logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
 
 					os.write(input, 0, input.length);
 				}
@@ -173,6 +173,9 @@ public class JavaCouchGenericFunction {
 					while ((responseLine = br.readLine()) != null) {
 						response.append(responseLine.trim());
 					}
+					after = System.nanoTime();
+					long latencyMicros = (after - before) / 1000;
+					logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
 					System.out.println(response);
 				}
 			} else {
@@ -195,14 +198,13 @@ public class JavaCouchGenericFunction {
 				document.put("selector", selector);
 
 //				Send Request
+				long before;
+				long after;
 				try (OutputStream os = con.getOutputStream()) {
 
-					long before = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
 					byte[] input = document.toString().getBytes(StandardCharsets.UTF_8);
-					long after = TimeUnit.MILLISECONDS.toMicros(System.nanoTime());
-					long latencyMicros = (after - before) / 1000;
 
-					logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
+					before = System.nanoTime();
 					os.write(input, 0, input.length);
 				}
 
@@ -214,6 +216,9 @@ public class JavaCouchGenericFunction {
 					while ((responseLine = br.readLine()) != null) {
 						response.append(responseLine.trim());
 					}
+					after = System.nanoTime();
+					long latencyMicros = (after - before) / 1000;
+					logger.info("[DB_LATENCY] latency " + latencyMicros + " μs");
 					System.out.println(response);
 				}
 			}
