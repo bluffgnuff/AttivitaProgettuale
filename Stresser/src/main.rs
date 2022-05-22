@@ -10,7 +10,7 @@ fn main() {
     let trigger_answer = env::var("TRIGGER_ANSWER").unwrap_or("trigger-answer".to_string());
     let group = env::var("GROUP").unwrap_or("default".to_string());
     //let command = env::var("COMMAND").unwrap_or("node ../JSGenericFunctionWithFlag/index.js".to_string());
-    // let command = env::var("COMMAND").unwrap_or("node ../JSCouchGenericFunction/index.js".to_string());
+    let command = env::var("COMMAND").unwrap_or("node ../JSCouchGenericFunction/index-create.js".to_string());
     // let command = env::var("COMMAND").unwrap_or("../JavaGenericFunctionWithFlag/build/install/JavaGenericFunctionWithFlag/bin/JavaGenericFunctionWithFlag".to_string());
     // let command = env::var("COMMAND").unwrap_or("../JavaMySQLGenericFunction/build/install/JavaMySQLGenericFunction/bin/JavaMySQLGenericFunction".to_string());
     // let command = env::var("COMMAND").unwrap_or("../JavaMongoGenericFunction/build/install/JavaMongoGenericFunction/bin/JavaMongoGenericFunction".to_string());
@@ -18,7 +18,7 @@ fn main() {
     // let command = env::var("COMMAND").unwrap_or("../GenericFunctionWithFlag/target/debug/GenericFunctionWithFlag".to_string());
     // let command = env::var("COMMAND").unwrap_or("../MongoGenericFunction/target/debug/MongoGenericFunction".to_string());
     // let command = env::var("COMMAND").unwrap_or("../MySQLGenericFunction/target/debug/MySQLGenericFunction".to_string());
-    let command = env::var("COMMAND").unwrap_or("../CouchGenericFunction/target/debug/CouchGenericFunction".to_string());
+    // let command = env::var("COMMAND").unwrap_or("../CouchGenericFunction/target/debug/CouchGenericFunction".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Read --table Customers --firstname Mario --lastname Rossi".to_string());
     // let args = env::var("COMMAND_ARGS").unwrap_or("--db-type Mongo --operation Create --table Customers --firstname Giuseppe --lastname Rossi".to_string());
     let args = env::var("COMMANDARGS").unwrap_or("--operation Read --table Customers --firstname MarioNoAuth --lastname Rossi".to_string());

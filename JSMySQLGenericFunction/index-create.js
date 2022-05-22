@@ -13,7 +13,7 @@ var id = process.argv[4];
 con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
-  var sql = "INSERT INTO CustomersNoConn (firstname, lastname, id) VALUES ('" + id +"', 'Mario', 'Rossi')";
+  var sql = "INSERT INTO CustomersNoConn (firstname, lastname, id) VALUES ('Mario',  'Rossi', '" + id +"')";
   
   var before = new Date().getTime();
   con.query(sql, function (err, result) {
