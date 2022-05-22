@@ -1,5 +1,4 @@
 const axios = require('axios');
-prompt.start();
 
 const axiosUrlComposer = (host, port) => { return 'http://' + host + ':' + port }
 const { v4: uuidv4 } = require('uuid');

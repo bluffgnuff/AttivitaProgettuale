@@ -21,7 +21,7 @@ fn main() {
     let command = env::var("COMMAND").unwrap_or("../CouchGenericFunction/target/debug/CouchGenericFunction".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Read --table Customers --firstname Mario --lastname Rossi".to_string());
     // let args = env::var("COMMAND_ARGS").unwrap_or("--db-type Mongo --operation Create --table Customers --firstname Giuseppe --lastname Rossi".to_string());
-    let args = env::var("COMMAND_ARGS").unwrap_or("--operation Read --table Customers --firstname MarioNoAuth --lastname Rossi".to_string());
+    let args = env::var("COMMANDARGS").unwrap_or("--operation Read --table Customers --firstname MarioNoAuth --lastname Rossi".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --firstname Mario --lastname Rossi --firstname-op Luca --firstname-op Villa".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Update --table Customers --id --rev --firstname-op Luca --firstname-op Villa".to_string());
     // let args = env::var("COMMAND-ARGS").unwrap_or("--operation Delete --table Customers --id ".to_string());

@@ -2,14 +2,14 @@
 FROM rust:1.59 as builder1
 WORKDIR ./CouchGenericFunction
 COPY ./CouchGenericFunction .
-RUN cargo build --release .
+RUN cargo install --path .
 
 # ------------------ InvokerNoConnection
 FROM rust:1.59 as builder2
 
 WORKDIR ./InvokerNoConnection
 COPY ./InvokerNoConnection .
-RUN cargo build --release .
+RUN cargo install --path .
 
 # ------------------ debian
 FROM debian:bookworm-slim
