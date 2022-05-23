@@ -4,21 +4,24 @@ WORKDIR ./JSMySQLGenericFunction
 COPY ./JSMySQLGenericFunction .
 
 RUN npm i mysql
+RUN npm install prompt
 
 # ------------------ MongoGenericFunction
 FROM node:latest as builder2
 WORKDIR ./JSMongoGenericFunction
 COPY ./JSMongoGenericFunction .
 
-RUN npm i moongose        
+RUN npm i moongose
+RUN npm install prompt
 
 # ------------------ CouchGenericFunction
 FROM node:latest as builder3
 WORKDIR ./JSCouchGenericFunction
 COPY ./JSCouchGenericFunction .
 
-RUN npm install uuid  
+RUN npm install uuid
 RUN npm i axios
+RUN npm install prompt
 
 # ------------------ InvokerNoConnection
 FROM rust:1.59 as builder4
@@ -31,7 +34,7 @@ RUN cargo install --path .
 # ------------------ debian
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get -y install openssl
+RUN apt-get update && apt-get -y install openssl && apt-get -y install nodejs
 
 COPY --from=builder1 /JSMySQLGenericFunction/ ${APP}/JSMySQLGenericFunction/
 COPY --from=builder2 /JSMongoGenericFunction/ ${APP}/JSMongoGenericFunction/
