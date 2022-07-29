@@ -1,4 +1,9 @@
 #!/bin/bash
+## Name file examples:
+## Stresser Mongo Create
+## Invoker Mongo Create
+## Second Invoker Mongo Create
+## Stresser No Connection Mongo Create
 
 # BASE=("Stresser" "Invoker")
 OP=("Create" "Read")
