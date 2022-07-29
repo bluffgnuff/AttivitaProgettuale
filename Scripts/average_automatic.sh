@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#!/bin/bash
+## WARNING!!! The output file must be cleaned sobstituing the "_" with a space and adding the quotes
 
 # Create | Read
 NAME="Average"
